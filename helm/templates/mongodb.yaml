@@ -9,7 +9,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: mongodb
+      app.kubernetes.io/name: novu-mongodb
   template:
     metadata:
       labels:
