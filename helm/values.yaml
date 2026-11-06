@@ -1625,6 +1625,13 @@ web:
     ## @param web.env.NODE_ENV The environment of the app.
     ##
     NODE_ENV: production
+    ## @param web.env.BASE_PATH The base path under which the dashboard is served.
+    ## When deploying behind a reverse proxy with a context path (e.g.
+    ## /services/eoxhub-gateway/hub-test-ws1/novu-web), set this to that path so
+    ## Vite asset references (/assets/...) are rewritten to include the prefix.
+    ## Constructed from GLOBAL_CONTEXT_PATH + WEB_CONTEXT_PATH when not set explicitly.
+    ##
+    BASE_PATH: ''
 
   ## @param web.apiExternalEndpoint The external endpoint of the API
   ##

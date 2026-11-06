@@ -81,6 +81,20 @@ spec:
           {{- if .Values.web.containerSecurityContext.enabled }}
           securityContext: {{- omit .Values.web.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
+          {{- if or .Values.web.env.GLOBAL_CONTEXT_PATH .Values.web.env.WEB_CONTEXT_PATH }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              CONTEXT_PATH="${{ .Values.web.env.GLOBAL_CONTEXT_PATH }}${{ .Values.web.env.WEB_CONTEXT_PATH }}"
+              CONTEXT_PATH="${CONTEXT_PATH#/}"
+              CONTEXT_PATH="/${CONTEXT_PATH%/}/"
+              if [ "$CONTEXT_PATH" != "//" ]; then
+                find /app/dist -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -print0 | while IFS= read -r -d '' f; do
+                  sed -i "s|href=\"/assets/|href=\"${CONTEXT_PATH}assets/|g; s|src=\"/assets/|src=\"${CONTEXT_PATH}assets/|g" "$f"
+                done
+              fi
+              exec /app/docker-entrypoint.sh http-server dist -p 4000 -d false --proxy http://localhost:4000?
+          {{- end }}
           {{- if .Values.diagnosticMode.enabled }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
           {{- else if .Values.web.command }}
@@ -104,6 +118,8 @@ spec:
               value : {{ .Values.web.apiExternalEndpoint | quote }}
             - name: VITE_WEBSOCKET_HOSTNAME
               value : {{ .Values.web.wsExternalEndpoint | quote }}
+            - name: BASE_PATH
+              value : {{ printf "%s/%s" .Values.web.env.GLOBAL_CONTEXT_PATH .Values.web.env.WEB_CONTEXT_PATH | replace "//" "/" | quote }}
 
             {{- if .Values.web.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.web.extraEnvVars "context" $) | nindent 12 }}
