@@ -16,7 +16,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: redis
+      app.kubernetes.io/name: novu-redis
   template:
     metadata:
       labels:
