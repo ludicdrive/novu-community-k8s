@@ -83,7 +83,7 @@ spec:
       protocol: TCP
       name: mongo
   selector:
-    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/name: novu-mongodb
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
