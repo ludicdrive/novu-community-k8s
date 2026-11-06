@@ -192,21 +192,21 @@ spec:
           {{- if .Values.worker.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.worker.customLivenessProbe "context" $) | nindent 12 }}
           {{- else if .Values.worker.livenessProbe.enabled }}
-          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.worker.livenessProbe "enabled") "context" $) | nindent 12 }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit (omit .Values.worker.livenessProbe "enabled") "httpGet") "context" $) | nindent 12 }}
             tcpSocket:
               port: http
           {{- end }}
           {{- if .Values.worker.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.worker.customReadinessProbe "context" $) | nindent 12 }}
           {{- else if .Values.worker.readinessProbe.enabled }}
-          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.worker.readinessProbe "enabled") "context" $) | nindent 12 }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit (omit .Values.worker.readinessProbe "enabled") "httpGet") "context" $) | nindent 12 }}
             tcpSocket:
               port: http
           {{- end }}
           {{- if .Values.worker.customStartupProbe }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.worker.customStartupProbe "context" $) | nindent 12 }}
           {{- else if .Values.worker.startupProbe.enabled }}
-          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.worker.startupProbe "enabled") "context" $) | nindent 12 }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit (omit .Values.worker.startupProbe "enabled") "httpGet") "context" $) | nindent 12 }}
             tcpSocket:
               port: http
           {{- end }}
