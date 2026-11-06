@@ -2,7 +2,7 @@ apiVersion: v2
 name: novu
 description: A Helm chart for Novu - Open-source notification infrastructure
 type: application
-version: 0.1.25
+version: 0.1.26
 appVersion: 3.19.0
 keywords:
   - novu
