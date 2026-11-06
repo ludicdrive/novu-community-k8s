@@ -113,15 +113,7 @@ Return Redis(TM) fullname
 Create a default fully qualified Redis(TM) name.
 */}}
 {{- define "novu.redis.host" -}}
-{{- if .Values.redis -}}
-{{- if .Values.redis.enabled -}}
-    {{- printf "%s-master" (include "novu.redis.fullname" .) | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-    {{- print .Values.externalRedis.host -}}
-{{- end -}}
-{{- else -}}
-    {{- print .Values.externalRedis.host -}}
-{{- end -}}
+{{- print .Values.externalRedis.host -}}
 {{- end -}}
 
 {{/*
