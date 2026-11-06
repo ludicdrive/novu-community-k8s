@@ -30,9 +30,6 @@ spec:
             - name: VITE_WEBSOCKET_HOSTNAME
               value: "{{ .Values.global.viteWebSocketHostname }}"
           volumes:
-            - name: dashboard-logs
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-dashboard-logs
             - name: mongodb-data
               persistentVolumeClaim:
                 claimName: {{ include "novu.fullname" . }}-mongodb-data

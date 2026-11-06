@@ -12,7 +12,8 @@ spec:
       app.kubernetes.io/name: mongodb
   template:
     metadata:
-      labels: {}
+      labels:
+        app.kubernetes.io/name: novu-mongodb
     spec:
       containers:
         - name: {{ .Chart.Name }}-mongodb

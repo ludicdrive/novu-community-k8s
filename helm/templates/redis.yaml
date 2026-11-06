@@ -34,9 +34,6 @@ spec:
             - docker-entrypoint.sh
             - redis-server
           volumes:
-            - name: redis-logs
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-redis-logs
             - name: mongodb-data
               persistentVolumeClaim:
                 claimName: {{ include "novu.fullname" . }}-mongodb-data

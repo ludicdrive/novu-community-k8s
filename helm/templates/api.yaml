@@ -113,9 +113,6 @@ spec:
             - name: IS_SELF_HOSTED
               value: "{{ .Values.global.isSelfHosted }}"
           volumes:
-            - name: api-logs
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-api-logs
             - name: mongodb-data
               persistentVolumeClaim:
                 claimName: {{ include "novu.fullname" . }}-mongodb-data

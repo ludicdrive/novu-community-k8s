@@ -93,9 +93,6 @@ spec:
             - name: IS_USE_MERGED_DIGEST_ID_ENABLED
               value: "{{ .Values.global.isUseMergedDigestIdEnabled }}"
           volumes:
-            - name: worker-logs
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-worker-logs
             - name: mongodb-data
               persistentVolumeClaim:
                 claimName: {{ include "novu.fullname" . }}-mongodb-data
