@@ -113,8 +113,12 @@ Return Redis(TM) fullname
 Create a default fully qualified Redis(TM) name.
 */}}
 {{- define "novu.redis.host" -}}
-{{- if and .Values.redis .Values.redis.enabled -}}
+{{- if .Values.redis -}}
+{{- if .Values.redis.enabled -}}
     {{- printf "%s-master" (include "novu.redis.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+    {{- print .Values.externalRedis.host -}}
+{{- end -}}
 {{- else -}}
     {{- print .Values.externalRedis.host -}}
 {{- end -}}
@@ -124,8 +128,12 @@ Create a default fully qualified Redis(TM) name.
 Return Redis(TM) port
 */}}
 {{- define "novu.redis.port" -}}
-{{- if and .Values.redis .Values.redis.enabled -}}
+{{- if .Values.redis -}}
+{{- if .Values.redis.enabled -}}
     {{- print .Values.redis.master.service.ports.redis -}}
+{{- else -}}
+    {{- print .Values.externalRedis.port  -}}
+{{- end -}}
 {{- else -}}
     {{- print .Values.externalRedis.port  -}}
 {{- end -}}
@@ -136,12 +144,16 @@ Return Redis(TM) port
 Return if Redis(TM) authentication is enabled
 */}}
 {{- define "novu.redis.auth.enabled" -}}
-{{- if and .Values.redis .Values.redis.enabled -}}
+{{- if .Values.redis -}}
+{{- if .Values.redis.enabled -}}
     {{- if .Values.redis.auth.enabled -}}
         {{- true -}}
     {{- end -}}
-{{- else if or .Values.externalRedis.password .Values.externalRedis.existingSecret -}}
+{{- else -}}
+    {{- if or .Values.externalRedis.password .Values.externalRedis.existingSecret -}}
     {{- true -}}
+    {{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -149,12 +161,22 @@ Return if Redis(TM) authentication is enabled
 Return the Redis(TM) Secret Name
 */}}
 {{- define "novu.redis.secretName" -}}
-{{- if and .Values.redis .Values.redis.enabled -}}
+{{- if .Values.redis -}}
+{{- if .Values.redis.enabled -}}
     {{- print (include "novu.redis.fullname" .) "-password" -}}
-{{- else if .Values.externalRedis.existingSecret -}}
-    {{- print .Values.externalRedis.existingSecret -}}
 {{- else -}}
+    {{- if .Values.externalRedis.existingSecret -}}
+    {{- print .Values.externalRedis.existingSecret -}}
+    {{- else -}}
     {{- printf "%s-externalredis" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+    {{- end -}}
+{{- end -}}
+{{- else -}}
+    {{- if .Values.externalRedis.existingSecret -}}
+    {{- print .Values.externalRedis.existingSecret -}}
+    {{- else -}}
+    {{- printf "%s-externalredis" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+    {{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -162,8 +184,20 @@ Return the Redis(TM) Secret Name
 Retrieve key of the Redis(TM) secret
 */}}
 {{- define "novu.redis.passwordKey" -}}
-{{- if and .Values.redis .Values.redis.enabled -}}
+{{- if .Values.redis -}}
+{{- if .Values.redis.enabled -}}
     {{- print "redis-password" -}}
+{{- else -}}
+    {{- if .Values.externalRedis.existingSecret -}}
+        {{- if .Values.externalRedis.existingSecretPasswordKey -}}
+            {{- printf "%s" .Values.externalRedis.existingSecretPasswordKey -}}
+        {{- else -}}
+            {{- print "redis-password" -}}
+        {{- end -}}
+    {{- else -}}
+        {{- print "redis-password" -}}
+    {{- end -}}
+{{- end -}}
 {{- else -}}
     {{- if .Values.externalRedis.existingSecret -}}
         {{- if .Values.externalRedis.existingSecretPasswordKey -}}

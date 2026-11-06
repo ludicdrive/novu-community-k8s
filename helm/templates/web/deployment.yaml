@@ -85,7 +85,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              CONTEXT_PATH="{{ .Values.web.env.GLOBAL_CONTEXT_PATH }}/{{ .Values.web.env.WEB_CONTEXT_PATH }}"
+              CONTEXT_PATH="{{ .Values.web.env.BASE_PATH }}"
               CONTEXT_PATH="${CONTEXT_PATH#/}"
               CONTEXT_PATH="/${CONTEXT_PATH%/}/"
               if [ "$CONTEXT_PATH" != "//" ]; then
