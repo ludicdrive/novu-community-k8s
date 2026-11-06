@@ -10,12 +10,10 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: novu-ws
-      {{- include "novu.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: novu-ws
-        {{- include "novu.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}-ws
@@ -101,14 +99,12 @@ spec:
       name: http
   selector:
     app.kubernetes.io/name: novu-ws
-    {{- include "novu.selectorLabels" . | nindent 4 }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "novu.fullname" . }}-ws-logs
-  labels:
-    {{- include "novu.labels" . | nindent 4 }}
+  labels: {}
 spec:
   accessModes:
     - ReadWriteOnce
