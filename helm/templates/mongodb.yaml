@@ -22,8 +22,10 @@ spec:
           image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
           imagePullPolicy: IfNotPresent
           containerName: mongodb
+          {{- if .Values.mongodb.resources }}
           resources:
-            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+              {{- toYaml .Values.mongodb.resources | nindent 12 }}
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "novu.fullname" . }}-mongodb-secret
@@ -113,28 +115,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "novu.fullname" . }}-mongodb-logging-config
-data:
-  logging-config.yaml: |
-    version: '1'
-    disable_timestamp: true
-    formatters:
-      json:
-        format: '{{json .}}'
-    handlers:
-      default:
-        formatter: json
-        max-size: {{ .Values.mongodb.logging.options.maxSize | default "50m" }}
-        max-files: {{ .Values.mongodb.logging.options.maxFile | default "5" }}
-    services:
-      json-file:
-        channels: default
-        max-size: {{ .Values.mongodb.logging.options.maxSize | default "50m" }}
-        max-files: {{ .Values.mongodb.logging.options.maxFile | default "5" }}
-        symlink: true
----
 {{- end }}

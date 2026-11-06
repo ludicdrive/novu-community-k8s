@@ -22,8 +22,10 @@ spec:
           image: "{{ .Values.dashboard.image.repository }}:{{ .Values.dashboard.image.tag }}"
           imagePullPolicy: IfNotPresent
           containerName: dashboard
-          resources:
+       {{- if .Values.dashboard.resources }}
+         resources:
             {{- toYaml .Values.dashboard.resources | nindent 12 }}
+      {{- end }}
           env:
             - name: VITE_API_HOSTNAME
               value: "{{ .Values.global.viteApiHostname }}"

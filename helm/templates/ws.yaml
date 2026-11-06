@@ -22,8 +22,10 @@ spec:
           image: "{{ .Values.ws.image.repository }}:{{ .Values.ws.image.tag }}"
           imagePullPolicy: IfNotPresent
           containerName: ws
-          resources:
-            {{- toYaml .ws.resources | nindent 12 }}
+       {{- if .Values.ws.resources }}
+         resources:
+            {{- toYaml .Values.ws.resources | nindent 12 }}
+      {{- end }}
           env:
             - name: PORT
               value: "{{ .Values.global.wsPort }}"

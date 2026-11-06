@@ -29,8 +29,10 @@ spec:
           image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
           imagePullPolicy: IfNotPresent
           containerName: redis
+          {{- if .Values.redis.resources }}
           resources:
-            {{- toYaml .Values.redis.resources | nindent 12 }}
+              {{- toYaml .Values.redis.resources | nindent 12 }}
+          {{- end }}
           command:
             - docker-entrypoint.sh
             - redis-server
@@ -97,28 +99,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "novu.fullname" . }}-redis-logging-config
-data:
-  logging-config.yaml: |
-    version: '1'
-    disable_timestamp: true
-    formatters:
-      json:
-        format: '{{json .}}'
-    handlers:
-      default:
-        formatter: json
-        max-size: {{ .Values.redis.logging.options.maxSize | default "50m" }}
-        max-files: {{ .Values.redis.logging.options.maxFile | default "5" }}
-    services:
-      json-file:
-        channels: default
-        max-size: {{ .Values.redis.logging.options.maxSize | default "50m" }}
-        max-files: {{ .Values.redis.logging.options.maxFile | default "5" }}
-        symlink: true
----
 {{- end }}
