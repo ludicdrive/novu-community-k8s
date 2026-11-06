@@ -96,9 +96,9 @@ spec:
             - name: PORT
               value : {{ print .Values.worker.port | quote }}
             - name: MONGO_MIN_POOL_SIZE
-              value : {{print  .Values.worker.env.MONGO_MIN_POOL_SIZE | default .Values.api.env.MONGO_MIN_POOL_SIZE | quote }}
+              value : {{ .Values.worker.env.MONGO_MIN_POOL_SIZE | default .Values.api.env.MONGO_MIN_POOL_SIZE | quote }}
             - name: MONGO_MAX_POOL_SIZE
-              value : {{print  .Values.worker.env.MONGO_MAX_POOL_SIZE | default .Values.api.env.MONGO_MAX_POOL_SIZE | quote }}
+              value : {{ .Values.worker.env.MONGO_MAX_POOL_SIZE | default .Values.api.env.MONGO_MAX_POOL_SIZE | quote }}
             - name: REDIS_HOST
               value : {{ include "novu.redis.host" . | quote }}
             - name: REDIS_PORT
