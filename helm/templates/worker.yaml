@@ -134,7 +134,6 @@ spec:
       name: http
   selector:
     app.kubernetes.io/name: novu-worker
-    {{- include "novu.selectorLabels" . | nindent 4 }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
