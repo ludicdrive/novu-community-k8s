@@ -144,7 +144,7 @@ spec:
           {{- else if .Values.ws.livenessProbe.enabled }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.ws.livenessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s/v1/health-check" .Values.ws.env.WS_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- if .Values.ws.customReadinessProbe }}
@@ -152,7 +152,7 @@ spec:
           {{- else if .Values.ws.readinessProbe.enabled }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.ws.readinessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s/v1/health-check" .Values.ws.env.WS_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- if .Values.ws.customStartupProbe }}
@@ -160,7 +160,7 @@ spec:
           {{- else if .Values.ws.startupProbe.enabled }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.ws.startupProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s/v1/health-check" .Values.ws.env.WS_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- end }}
