@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: {{ include "novu.fullname" . }}-mongodb
   labels:
-    {{- include "novu.labels" . | nindent 4 }}
+    app.kubernetes.io/name: novu-mongodb
 spec:
   replicas: 1
   selector:
