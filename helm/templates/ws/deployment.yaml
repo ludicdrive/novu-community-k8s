@@ -92,7 +92,7 @@ spec:
           {{- end }}
           env:
             - name: NODE_ENV
-              value : {{print .Values.api.env.NODE_ENV | quote }}
+              value : {{print .Values.ws.env.NODE_ENV | quote }}
             - name: PORT
               value : {{print  .Values.ws.port | quote }}
             - name: MONGO_MIN_POOL_SIZE
@@ -113,6 +113,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "novu.mongodb.secretName" .}}
                   key: mongoUrl
+            - name: WS_CONTEXT_PATH
+              value : {{ .Values.ws.env.WS_CONTEXT_PATH | quote }}
             - name: JWT_SECRET
               valueFrom :
                 secretKeyRef:

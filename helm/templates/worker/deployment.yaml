@@ -92,13 +92,13 @@ spec:
           {{- end }}
           env:
             - name: NODE_ENV
-              value : {{print .Values.api.env.NODE_ENV | quote }}
+              value : {{print .Values.worker.env.NODE_ENV | quote }}
             - name: PORT
               value : {{ print .Values.worker.port | quote }}
             - name: MONGO_MIN_POOL_SIZE
-              value : {{print  .Values.api.env.MONGO_MIN_POOL_SIZE | quote }}
+              value : {{print  .Values.worker.env.MONGO_MIN_POOL_SIZE | default .Values.api.env.MONGO_MIN_POOL_SIZE | quote }}
             - name: MONGO_MAX_POOL_SIZE
-              value : {{print  .Values.api.env.MONGO_MAX_POOL_SIZE | quote }}
+              value : {{print  .Values.worker.env.MONGO_MAX_POOL_SIZE | default .Values.api.env.MONGO_MAX_POOL_SIZE | quote }}
             - name: REDIS_HOST
               value : {{ include "novu.redis.host" . | quote }}
             - name: REDIS_PORT
@@ -155,6 +155,16 @@ spec:
                   name: {{ include "novu.s3.secretName" . }}
                   key: secretKey
             {{- end }}
+            - name: BROADCAST_QUEUE_CHUNK_SIZE
+              value : {{ .Values.worker.env.BROADCAST_QUEUE_CHUNK_SIZE | quote }}
+            - name: MULTICAST_QUEUE_CHUNK_SIZE
+              value : {{ .Values.worker.env.MULTICAST_QUEUE_CHUNK_SIZE | quote }}
+            - name: IS_EMAIL_INLINE_CSS_DISABLED
+              value : {{ .Values.worker.env.IS_EMAIL_INLINE_CSS_DISABLED | quote }}
+            - name: IS_USE_MERGED_DIGEST_ID_ENABLED
+              value : {{ .Values.worker.env.IS_USE_MERGED_DIGEST_ID_ENABLED | quote }}
+            - name: API_ROOT_URL
+              value : http://novu-api:{{ .Values.api.port }}
             - name: STORE_ENCRYPTION_KEY
               valueFrom :
                 secretKeyRef:

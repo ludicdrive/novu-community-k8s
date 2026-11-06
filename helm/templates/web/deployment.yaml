@@ -100,8 +100,10 @@ spec:
               value : {{  .Values.web.apiExternalEndpoint }}
             - name: REACT_APP_API_URL
               value : {{  .Values.web.apiExternalEndpoint }}
-            - name: REACT_APP_WS_URL
-              value : {{  .Values.web.wsExternalEndpoint }}
+            - name: VITE_API_HOSTNAME
+              value : {{ .Values.web.apiExternalEndpoint | quote }}
+            - name: VITE_WEBSOCKET_HOSTNAME
+              value : {{ .Values.web.wsExternalEndpoint | quote }}
 
             {{- if .Values.web.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.web.extraEnvVars "context" $) | nindent 12 }}

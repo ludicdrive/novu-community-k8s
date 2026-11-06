@@ -171,6 +171,29 @@ spec:
                 secretKeyRef:
                   name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: store-encryption-key
+            - name: NOVU_SECRET_KEY
+              valueFrom :
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
+                  key: novu-secret-key
+            - name: SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME
+              value : {{ .Values.api.env.SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME | quote }}
+            - name: SENTRY_DSN
+              value : {{ .Values.api.env.SENTRY_DSN | quote }}
+            - name: MONGO_AUTO_CREATE_INDEXES
+              value : {{ .Values.api.env.MONGO_AUTO_CREATE_INDEXES | quote }}
+            - name: IS_API_IDEMPOTENCY_ENABLED
+              value : {{ .Values.api.env.IS_API_IDEMPOTENCY_ENABLED | quote }}
+            - name: IS_API_RATE_LIMITING_ENABLED
+              value : {{ .Values.api.env.IS_API_RATE_LIMITING_ENABLED | quote }}
+            - name: IS_NEW_MESSAGES_API_RESPONSE_ENABLED
+              value : {{ .Values.api.env.IS_NEW_MESSAGES_API_RESPONSE_ENABLED | quote }}
+            - name: IS_V2_ENABLED
+              value : {{ .Values.api.env.IS_V2_ENABLED | quote }}
+            - name: IS_SELF_HOSTED
+              value : {{ .Values.api.env.IS_SELF_HOSTED | quote }}
+            - name: API_CONTEXT_PATH
+              value : {{ .Values.api.env.API_CONTEXT_PATH | quote }}
             {{- if .Values.api.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

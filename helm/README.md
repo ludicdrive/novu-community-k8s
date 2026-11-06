@@ -1,5 +1,3 @@
-<!--- app-name: Keycloak -->
-
 # Novu Helm Chart
 
 Novu provides a unified API that makes it simple to send notifications through multiple channels, including In-App, Push, Email, SMS, and Chat. With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
@@ -9,29 +7,37 @@ Novu provides a unified API that makes it simple to send notifications through m
 ## TL;DR
 
 ```console
-helm install my-novu ./ --set store.encryptionKey=$(openssl rand -base64 32)
+helm install my-novu . --set jwt.secret=$(openssl rand -base64 32) --set store.encryption-key=$(openssl rand -hex 16) --set novu.secret-key=$(openssl rand -base64 32)
 ```
 
 ## Introduction
 
-This Helm chart is inspired by Bitnami charts and make use of Bitnami charts for its dependencies.
+This Helm chart bootstraps a [Novu](https://github.com/novuhq/novu) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-This chart bootstraps a [Novu](https://github.com/novuhq/novu) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+The chart is aligned with the upstream [Novu Docker Compose setup](https://github.com/novuhq/novu/tree/next/docker/community) and uses the Novu images from [GitHub Container Registry](https://ghcr.io/novuhq/novu).
+
+> **Tip**: List all releases using `helm list`
 
 ## Prerequisites
 
 - Kubernetes 1.19+
 - Helm 3.2.0+
+- A running **MongoDB** instance (external or managed) - the chart does not deploy MongoDB
+- A running **Redis** instance (external or managed) - the chart does not deploy Redis
+- Optionally, **LocalStack** for S3-compatible object storage (disabled by default)
 
 ## Installing the Chart
 
 To install the chart with the release name `my-novu`:
 
 ```console
-helm install my-novu ./ --set store.encryptionKey=$(openssl rand -base64 32)
+helm install my-novu . \
+  --set jwt.secret=$(openssl rand -base64 32) \
+  --set store.encryption-key=$(openssl rand -hex 16) \
+  --set novu.secret-key=$(openssl rand -base64 32)
 ```
 
-These commands deploy a Keycloak application on the Kubernetes cluster in the default configuration.
+These commands deploy the Novu API, Worker, WebSocket, and Dashboard services on the Kubernetes cluster in the default configuration.
 
 > **Tip**: List all releases using `helm list`
 
@@ -40,10 +46,10 @@ These commands deploy a Keycloak application on the Kubernetes cluster in the de
 To uninstall/delete the `my-release` deployment:
 
 ```console
-helm delete my-novu
+helm delete my-release
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+The command removes all the Kubernetes components associated with the release and deletes the release.
 
 ## Parameters
 
@@ -77,7 +83,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `api.image.registry`                                  | Novu image registry                                                                                                                             | `ghcr.io`                |
 | `api.image.repository`                                | Novu image repository                                                                                                                           | `novuhq/novu/api`        |
-| `api.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `0.15.0`                 |
+| `api.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `3.19.0`                 |
 | `api.image.digest`                                    | Novu image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                     |
 | `api.image.pullPolicy`                                | Novu image pull policy                                                                                                                          | `IfNotPresent`           |
 | `api.image.pullSecrets`                               | Novu image pull secrets                                                                                                                         | `[]`                     |
@@ -146,7 +152,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.extraEnvVarsCM`                                  | Name of existing ConfigMap containing extra env vars for novu api nodes                                                                         | `""`                     |
 | `api.extraEnvVarsSecret`                              | Name of existing Secret containing extra env vars for novu api nodes                                                                            | `""`                     |
 | `api.extraVolumes`                                    | Optionally specify extra list of additional volumes for the novu api pod(s)                                                                     | `[]`                     |
-| `api.extraVolumeMounts`                               | Optionally specify extra list of additional volumeMounts for the novu api container(s)                                                          | `[]`                     |
+| `api.extraVolumeMounts`                               | Optionally specify list of additional volumeMounts for the novu api container(s)                                                                | `[]`                     |
 | `api.sidecars`                                        | Add additional sidecar containers to the novu api pod(s)                                                                                        | `[]`                     |
 | `api.initContainers`                                  | Add additional init containers to the novu api pod(s)                                                                                           | `[]`                     |
 | `api.service.annotations`                             | Additional custom annotations for api service                                                                                                   | `{}`                     |
@@ -155,9 +161,20 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.env.NODE_ENV`                                    | The environment of the app.                                                                                                                     | `production`             |
 | `api.env.API_ROOT_URL`                                | Define the required env for novu                                                                                                                | `http://novu-api:3000`   |
 | `api.env.DISABLE_USER_REGISTRATION`                   | If users should not be able to create new accounts. Possible values are: true, false                                                            | `true`                   |
-| `api.env.FRONT_BASE_URL`                              | The base url on which your frontend is accessible for the user. (e.g. dashboard.novu.co)                                                              | `http://novu-web:4200`   |
+| `api.env.FRONT_BASE_URL`                              | The base url on which your frontend is accessible for the user. (e.g. dashboard.novu.co)                                                          | `http://novu-web:4000`   |
 | `api.env.MONGO_MIN_POOL_SIZE`                         | The min pool size of the MongoDB connection                                                                                                     | `10`                     |
 | `api.env.MONGO_MAX_POOL_SIZE`                         | The max pool size of the MongoDB connection                                                                                                     | `50`                     |
+| `api.env.MONGO_AUTO_CREATE_INDEXES`                   | Automatically create MongoDB indexes on startup                                                                                                 | `true`                   |
+| `api.env.IS_API_IDEMPOTENCY_ENABLED`                  | Enable API idempotency                                                                                                                          | `false`                  |
+| `api.env.IS_API_RATE_LIMITING_ENABLED`                | Enable API rate limiting                                                                                                                        | `false`                  |
+| `api.env.IS_NEW_MESSAGES_API_RESPONSE_ENABLED`        | Enable new messages API response format                                                                                                         | `true`                   |
+| `api.env.IS_V2_ENABLED`                               | Enable v2 API                                                                                                                                   | `true`                   |
+| `api.env.IS_SELF_HOSTED`                              | Mark the deployment as self-hosted                                                                                                              | `true`                   |
+| `api.env.SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME`       | Expiration time for subscriber widget JWT                                                                                                       | `15d`                    |
+| `api.env.SENTRY_DSN`                                  | Sentry DSN for error reporting                                                                                                                  | `""`                     |
+| `api.env.NOVU_SECRET_KEY`                             | Secret key used by Novu SDKs (injected from secret)                                                                                             | `-`                      |
+| `api.env.API_CONTEXT_PATH`                            | Base path for the API when behind a reverse proxy                                                                                               | `""`                     |
+| `api.env.GLOBAL_CONTEXT_PATH`                         | Global base path for all Novu services behind a reverse proxy                                                                                   | `""`                     |
 | `api.ingress.enabled`                                 | Enable ingress record generation for novu api                                                                                                   | `false`                  |
 | `api.ingress.pathType`                                | Ingress path type                                                                                                                               | `ImplementationSpecific` |
 | `api.ingress.apiVersion`                              | Force Ingress API version (automatically detected if not set)                                                                                   | `""`                     |
@@ -179,14 +196,13 @@ The command removes all the Kubernetes components associated with the chart and 
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `worker.image.registry`                                  | Novu image registry                                                                                                                             | `ghcr.io`            |
 | `worker.image.repository`                                | Novu image repository                                                                                                                           | `novuhq/novu/worker` |
-| `worker.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `0.15.0`             |
+| `worker.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `3.19.0`             |
 | `worker.image.digest`                                    | Novu image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                 |
 | `worker.image.pullPolicy`                                | Novu image pull policy                                                                                                                          | `IfNotPresent`       |
 | `worker.image.pullSecrets`                               | Novu image pull secrets                                                                                                                         | `[]`                 |
 | `worker.image.debug`                                     | Enable Novu image debug mode                                                                                                                    | `false`              |
 | `worker.replicaCount`                                    | Number of novu worker replicas to deploy                                                                                                        | `1`                  |
-| `worker.containerPorts.http`                             | novu worker HTTP container port                                                                                                                 | `80`                 |
-| `worker.containerPorts.https`                            | novu worker HTTPS container port                                                                                                                | `443`                |
+| `worker.containerPorts.http`                             | novu worker HTTP container port                                                                                                                 | `3004`               |
 | `worker.livenessProbe.enabled`                           | Enable livenessProbe on novu worker containers                                                                                                  | `true`               |
 | `worker.livenessProbe.initialDelaySeconds`               | Initial delay seconds for livenessProbe                                                                                                         | `30`                 |
 | `worker.livenessProbe.periodSeconds`                     | Period seconds for livenessProbe                                                                                                                | `10`                 |
@@ -224,10 +240,10 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.podAnnotations`                                  | Annotations for novu worker pods                                                                                                                | `{}`                 |
 | `worker.podAffinityPreset`                               | Pod affinity preset. Ignored if `worker.affinity` is set. Allowed values: `soft` or `hard`                                                      | `""`                 |
 | `worker.podAntiAffinityPreset`                           | Pod anti-affinity preset. Ignored if `worker.affinity` is set. Allowed values: `soft` or `hard`                                                 | `soft`               |
-| `worker.pdb.create`                                      | Enable/disable a Pod Disruption Budget creation                                                                                                 | `false`              |
+| `worker.pdb.create`                                      | Enable/disable a Pod Disruption Budget creation                                                                                                 | `false`                  |
 | `worker.pdb.minAvailable`                                | Minimum number/percentage of pods that should remain scheduled                                                                                  | `1`                  |
 | `worker.pdb.maxUnavailable`                              | Maximum number/percentage of pods that may be made unavailable                                                                                  | `""`                 |
-| `worker.autoscaling.enabled`                             | Enable autoscaling for worker                                                                                                                   | `false`              |
+| `worker.autoscaling.enabled`                             | Enable autoscaling for worker                                                                                                                   | `false`                  |
 | `worker.autoscaling.minReplicas`                         | Minimum number of worker replicas                                                                                                               | `""`                 |
 | `worker.autoscaling.maxReplicas`                         | Maximum number of worker replicas                                                                                                               | `""`                 |
 | `worker.autoscaling.targetCPU`                           | Target CPU utilization percentage                                                                                                               | `""`                 |
@@ -245,11 +261,16 @@ The command removes all the Kubernetes components associated with the chart and 
 | `worker.schedulerName`                                   | Name of the k8s scheduler (other than default) for novu worker pods                                                                             | `""`                 |
 | `worker.terminationGracePeriodSeconds`                   | Seconds Redmine pod needs to terminate gracefully                                                                                               | `""`                 |
 | `worker.lifecycleHooks`                                  | for the novu worker container(s) to automate configuration before or after startup                                                              | `{}`                 |
+| `worker.env.NODE_ENV`                                    | The environment of the app.                                                                                                                     | `production`         |
+| `worker.env.BROADCAST_QUEUE_CHUNK_SIZE`                  | Broadcast queue chunk size                                                                                                                      | `100`                |
+| `worker.env.MULTICAST_QUEUE_CHUNK_SIZE`                  | Multicast queue chunk size                                                                                                                      | `100`                |
+| `worker.env.IS_EMAIL_INLINE_CSS_DISABLED`                | Disable inline CSS for emails                                                                                                                   | `false`              |
+| `worker.env.IS_USE_MERGED_DIGEST_ID_ENABLED`             | Enable merged digest ID                                                                                                                         | `false`              |
 | `worker.extraEnvVars`                                    | Array with extra environment variables to add to novu worker nodes                                                                              | `[]`                 |
 | `worker.extraEnvVarsCM`                                  | Name of existing ConfigMap containing extra env vars for novu worker nodes                                                                      | `""`                 |
 | `worker.extraEnvVarsSecret`                              | Name of existing Secret containing extra env vars for novu worker nodes                                                                         | `""`                 |
 | `worker.extraVolumes`                                    | Optionally specify extra list of additional volumes for the novu worker pod(s)                                                                  | `[]`                 |
-| `worker.extraVolumeMounts`                               | Optionally specify extra list of additional volumeMounts for the novu worker container(s)                                                       | `[]`                 |
+| `worker.extraVolumeMounts`                               | Optionally specify list of additional volumeMounts for the novu worker container(s)                                                             | `[]`                 |
 | `worker.sidecars`                                        | Add additional sidecar containers to the novu worker pod(s)                                                                                     | `[]`                 |
 | `worker.initContainers`                                  | Add additional init containers to the novu worker pod(s)                                                                                        | `[]`                 |
 | `worker.service.annotations`                             | Additional custom annotations for worker service                                                                                                | `{}`                 |
@@ -262,14 +283,13 @@ The command removes all the Kubernetes components associated with the chart and 
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `ws.image.registry`                                  | Novu image registry                                                                                                                             | `ghcr.io`                |
 | `ws.image.repository`                                | Novu image repository                                                                                                                           | `novuhq/novu/ws`         |
-| `ws.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `0.15.0`                 |
+| `ws.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `3.19.0`                 |
 | `ws.image.digest`                                    | Novu image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                     |
 | `ws.image.pullPolicy`                                | Novu image pull policy                                                                                                                          | `IfNotPresent`           |
 | `ws.image.pullSecrets`                               | Novu image pull secrets                                                                                                                         | `[]`                     |
 | `ws.image.debug`                                     | Enable Novu image debug mode                                                                                                                    | `false`                  |
 | `ws.replicaCount`                                    | Number of novu ws replicas to deploy                                                                                                            | `1`                      |
-| `ws.containerPorts.http`                             | novu ws HTTP container port                                                                                                                     | `80`                     |
-| `ws.containerPorts.https`                            | novu ws HTTPS container port                                                                                                                    | `443`                    |
+| `ws.containerPorts.http`                             | novu ws HTTP container port                                                                                                                     | `3002`                   |
 | `ws.livenessProbe.enabled`                           | Enable livenessProbe on novu ws containers                                                                                                      | `true`                   |
 | `ws.livenessProbe.initialDelaySeconds`               | Initial delay seconds for livenessProbe                                                                                                         | `30`                     |
 | `ws.livenessProbe.periodSeconds`                     | Period seconds for livenessProbe                                                                                                                | `10`                     |
@@ -328,16 +348,18 @@ The command removes all the Kubernetes components associated with the chart and 
 | `ws.schedulerName`                                   | Name of the k8s scheduler (other than default) for novu ws pods                                                                                 | `""`                     |
 | `ws.terminationGracePeriodSeconds`                   | Seconds Redmine pod needs to terminate gracefully                                                                                               | `""`                     |
 | `ws.lifecycleHooks`                                  | for the novu ws container(s) to automate configuration before or after startup                                                                  | `{}`                     |
+| `ws.env.NODE_ENV`                                    | The environment of the app.                                                                                                                     | `production`             |
+| `ws.env.WS_CONTEXT_PATH`                             | Base path for WebSocket when behind a reverse proxy                                                                                             | `""`                     |
 | `ws.extraEnvVars`                                    | Array with extra environment variables to add to novu ws nodes                                                                                  | `[]`                     |
 | `ws.extraEnvVarsCM`                                  | Name of existing ConfigMap containing extra env vars for novu ws nodes                                                                          | `""`                     |
 | `ws.extraEnvVarsSecret`                              | Name of existing Secret containing extra env vars for novu ws nodes                                                                             | `""`                     |
 | `ws.extraVolumes`                                    | Optionally specify extra list of additional volumes for the novu ws pod(s)                                                                      | `[]`                     |
-| `ws.extraVolumeMounts`                               | Optionally specify extra list of additional volumeMounts for the novu ws container(s)                                                           | `[]`                     |
+| `ws.extraVolumeMounts`                               | Optionally specify list of additional volumeMounts for the novu ws container(s)                                                                 | `[]`                     |
 | `ws.sidecars`                                        | Add additional sidecar containers to the novu ws pod(s)                                                                                         | `[]`                     |
 | `ws.initContainers`                                  | Add additional init containers to the novu ws pod(s)                                                                                            | `[]`                     |
 | `ws.service.annotations`                             | Additional custom annotations for ws service                                                                                                    | `{}`                     |
 | `ws.service.extraPorts`                              | Extra port to expose on ws service                                                                                                              | `[]`                     |
-| `ws.ingress.enabled`                                 | Enable ingress record generation for novu api                                                                                                   | `false`                  |
+| `ws.ingress.enabled`                                 | Enable ingress record generation for novu ws                                                                                                    | `false`                  |
 | `ws.ingress.pathType`                                | Ingress path type                                                                                                                               | `ImplementationSpecific` |
 | `ws.ingress.apiVersion`                              | Force Ingress API version (automatically detected if not set)                                                                                   | `""`                     |
 | `ws.ingress.hostname`                                | Default host for the ingress record                                                                                                             | `novu-ws.local`          |
@@ -353,13 +375,13 @@ The command removes all the Kubernetes components associated with the chart and 
 | `ws.ingress.extraRules`                              | Additional rules to be covered with this ingress record                                                                                         | `[]`                     |
 | `ws.port`                                            | The port on which the Websocket app should listen on                                                                                            | `3002`                   |
 
-### Novu Web Parameters
+### Novu Web (Dashboard) Parameters
 
 | Name                                                  | Description                                                                                                                                     | Value                    |
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `web.image.registry`                                  | Novu image registry                                                                                                                             | `ghcr.io`                |
-| `web.image.repository`                                | Novu image repository                                                                                                                           | `novuhq/novu/web`        |
-| `web.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `0.15.0`                 |
+| `web.image.repository`                                | Novu image repository                                                                                                                           | `novuhq/novu/dashboard`  |
+| `web.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `3.19.0`                 |
 | `web.image.digest`                                    | Novu image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                     |
 | `web.image.pullPolicy`                                | Novu image pull policy                                                                                                                          | `IfNotPresent`           |
 | `web.image.pullSecrets`                               | Novu image pull secrets                                                                                                                         | `[]`                     |
@@ -427,26 +449,14 @@ The command removes all the Kubernetes components associated with the chart and 
 | `web.extraEnvVarsCM`                                  | Name of existing ConfigMap containing extra env vars for novu web nodes                                                                         | `""`                     |
 | `web.extraEnvVarsSecret`                              | Name of existing Secret containing extra env vars for novu web nodes                                                                            | `""`                     |
 | `web.extraVolumes`                                    | Optionally specify extra list of additional volumes for the novu web pod(s)                                                                     | `[]`                     |
-| `web.extraVolumeMounts`                               | Optionally specify extra list of additional volumeMounts for the novu web container(s)                                                          | `[]`                     |
+| `web.extraVolumeMounts`                               | Optionally specify list of additional volumeMounts for the novu web container(s)                                                                | `[]`                     |
 | `web.sidecars`                                        | Add additional sidecar containers to the novu web pod(s)                                                                                        | `[]`                     |
 | `web.initContainers`                                  | Add additional init containers to the novu web pod(s)                                                                                           | `[]`                     |
 | `web.service.annotations`                             | Additional custom annotations for web service                                                                                                   | `{}`                     |
 | `web.service.extraPorts`                              | Extra port to expose on web service                                                                                                             | `[]`                     |
-| `web.ingress.enabled`                                 | Enable ingress record generation for novu api                                                                                                   | `false`                  |
-| `web.ingress.pathType`                                | Ingress path type                                                                                                                               | `ImplementationSpecific` |
-| `web.ingress.apiVersion`                              | Force Ingress API version (automatically detected if not set)                                                                                   | `""`                     |
-| `web.ingress.hostname`                                | Default host for the ingress record                                                                                                             | `novu-web.local`         |
-| `web.ingress.ingressClassName`                        | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                                   | `""`                     |
-| `web.ingress.path`                                    | Default path for the ingress record                                                                                                             | `/`                      |
-| `web.ingress.annotations`                             | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.                | `{}`                     |
-| `web.ingress.tls`                                     | Enable TLS configuration for the host defined at `web.ingress.hostname` parameter                                                               | `false`                  |
-| `web.ingress.selfSigned`                              | Create a TLS secret for this ingress record using self-signed certificates generated by Helm                                                    | `false`                  |
-| `web.ingress.extraHosts`                              | An array with additional hostname(s) to be covered with the ingress record                                                                      | `[]`                     |
-| `web.ingress.extraPaths`                              | An array with additional arbitrary paths that may need to be added to the ingress under the main host                                           | `[]`                     |
-| `web.ingress.extraTls`                                | TLS configuration for additional hostname(s) to be covered with this ingress record                                                             | `[]`                     |
-| `web.ingress.secrets`                                 | Custom TLS certificates as secrets                                                                                                              | `[]`                     |
-| `web.ingress.extraRules`                              | Additional rules to be covered with this ingress record                                                                                         | `[]`                     |
-| `web.port`                                            | The port on which the Web app should listen on                                                                                                  | `4200`                   |
+| `web.port`                                            | The port on which the Web app should listen on                                                                                                  | `4000`                   |
+| `web.apiExternalEndpoint`                             | External endpoint of the API used by the dashboard                                                                                              | `http://127.0.0.1:3000`  |
+| `web.wsExternalEndpoint`                              | External websocket endpoint used by the dashboard                                                                                               | `ws://127.0.0.1:3002`    |
 
 ### Persistence Parameters
 
@@ -460,7 +470,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `persistence.accessModes`                     | Persistent Volume Access Modes                                                                          | `["ReadWriteOnce"]` |
 | `persistence.size`                            | Size of data volume                                                                                     | `8Gi`               |
 | `persistence.existingClaim`                   | The name of an existing PVC to use for persistence                                                      | `""`                |
-| `persistence.selector`                        | Selector to match an existing Persistent Volume for WordPress data PVC                                  | `{}`                |
+| `persistence.selector`                        | Selector to match an existing Persistent Volume for data PVC                                            | `{}`                |
 | `persistence.dataSource`                      | Custom PVC data source                                                                                  | `{}`                |
 | `serviceAccount.create`                       | Specifies whether a ServiceAccount should be created                                                    | `true`              |
 | `serviceAccount.name`                         | The name of the ServiceAccount to use.                                                                  | `""`                |
@@ -485,36 +495,9 @@ The command removes all the Kubernetes components associated with the chart and 
 | ---------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------- |
 | `jwt.secret`           | The secret keybase which is used to encrypt / verify the tokens issued for authentication | `your-secret`                      |
 | `store.encryption-key` | The encryption key used to encrypt/decrypt provider credentials                           | `ekwUKf9yLjGPLOz939Y1GM0nJckVoVyF` |
+| `novu.secret-key`      | Secret key used by Novu SDKs for server-to-server authentication                          | ``                                 |
 
-### Mongodb configuration
-
-| Name                     | Description                                          | Value               |
-| ------------------------ | ---------------------------------------------------- | ------------------- |
-| `mongodb.enabled`        | Switch to enable or disable the MongoDB helm chart   | `false`             |
-| `mongodb.auth.enabled`   | Enable auth for mongodb database                     | `true`              |
-| `mongodb.auth.usernames` | Array of Name for custom users to create             | `["novu_user"]`     |
-| `mongodb.auth.passwords` | Array of Password for custom users to create         | `["novu_password"]` |
-| `mongodb.auth.databases` | Array of Name for custom databases to create         | `["novu_db"]`       |
-| `mongodb.architecture`   | mongodb architecture (`standalone` or `replication`) | `standalone`        |
-
-### Redis configuration
-
-| Name                  | Description                                        | Value           |
-| --------------------- | -------------------------------------------------- | --------------- |
-| `redis.enabled`       | Switch to enable or disable the redis helm chart   | `false`         |
-| `redis.auth.enabled`  | Enable auth for redis database                     | `true`          |
-| `redis.auth.password` | password for redis database                        | `novu_password` |
-| `redis.architecture`  | redis architecture (`standalone` or `replication`) | `standalone`    |
-
-### Localstack (S3) configuration
-
-| Name                       | Description                                                 | Value   |
-| -------------------------- | ----------------------------------------------------------- | ------- |
-| `localstack.enabled`       | Switch to enable or disable the localstack helm chart       | `false` |
-| `localstack.startServices` | List of comma separated services to start in the localstack | `s3`    |
-| `localstack.image.tag`     | the version of localstack docker image to use               | `2.1.0` |
-
-### External mongoDB database configuration
+### External MongoDB database configuration
 
 | Name                        | Description                                 | Value           |
 | --------------------------- | ------------------------------------------- | --------------- |
@@ -524,7 +507,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `externalDatabase.password` | Password for external mongoDB database      | `""`            |
 | `externalDatabase.database` | Database name for external mongoDB database | `novu-db`       |
 
-### External redis configuration
+### External Redis configuration
 
 | Name                     | Description                          | Value   |
 | ------------------------ | ------------------------------------ | ------- |
@@ -532,7 +515,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `externalRedis.port`     | Port for external Redis database     | `6379`  |
 | `externalRedis.password` | Password for external Redis database | `""`    |
 
-### External s3 configuration
+### External S3 configuration
 
 | Name                    | Description                                | Value                    |
 | ----------------------- | ------------------------------------------ | ------------------------ |
@@ -541,3 +524,19 @@ The command removes all the Kubernetes components associated with the chart and 
 | `externalS3.region`     | Region name for external S3 storage access | `us-east-1`              |
 | `externalS3.accessKey`  | access Key for external S3 storage access  | `test`                   |
 | `externalS3.secretKey`  | secret Key for external S3 storage access  | `test`                   |
+
+### Localstack (S3) configuration
+
+| Name                       | Description                                                 | Value   |
+| -------------------------- | ----------------------------------------------------------- | ------- |
+| `localstack.enabled`       | Switch to enable or disable the localstack helm chart       | `false` |
+| `localstack.startServices` | List of comma separated services to start in the localstack | `s3`    |
+| `localstack.image.tag`     | the version of localstack docker image to use               | `2.1.0` |
+
+## Notes
+
+- This chart does **not** deploy MongoDB or Redis. You must provide external instances and configure them via `externalDatabase.*` and `externalRedis.*`.
+- LocalStack is optional and disabled by default. Enable it with `localstack.enabled=true` if you need S3-compatible storage locally.
+- All four Novu services (api, worker, ws, dashboard) are pinned to the same version tag (`3.19.0`).
+- For production, change the default values for `jwt.secret`, `store.encryption-key`, and `novu.secret-key`.
+- The dashboard container is served on port **4000** and is not controlled by the `API_CONTEXT_PATH`/`WS_CONTEXT_PATH` variables.

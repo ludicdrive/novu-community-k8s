@@ -76,7 +76,7 @@ api:
   image:
     registry: ghcr.io
     repository: novuhq/novu/api
-    tag: 0.15.0
+    tag: 3.19.0
     digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -364,7 +364,40 @@ api:
     DISABLE_USER_REGISTRATION: true
     ## @param api.env.FRONT_BASE_URL The base url on which your frontend is accessible for the user. (e.g. dashboard.novu.co)
     ##
-    FRONT_BASE_URL: http://novu-web:4200
+    FRONT_BASE_URL: http://novu-web:4000
+    ## @param api.env.MONGO_AUTO_CREATE_INDEXES
+    ##
+    MONGO_AUTO_CREATE_INDEXES: true
+    ## @param api.env.IS_API_IDEMPOTENCY_ENABLED
+    ##
+    IS_API_IDEMPOTENCY_ENABLED: false
+    ## @param api.env.IS_API_RATE_LIMITING_ENABLED
+    ##
+    IS_API_RATE_LIMITING_ENABLED: false
+    ## @param api.env.IS_NEW_MESSAGES_API_RESPONSE_ENABLED
+    ##
+    IS_NEW_MESSAGES_API_RESPONSE_ENABLED: true
+    ## @param api.env.IS_V2_ENABLED
+    ##
+    IS_V2_ENABLED: true
+    ## @param api.env.IS_SELF_HOSTED
+    ##
+    IS_SELF_HOSTED: true
+    ## @param api.env.SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME
+    ##
+    SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: 15d
+    ## @param api.env.SENTRY_DSN
+    ##
+    SENTRY_DSN: ''
+    ## @param api.env.NOVU_SECRET_KEY (should be provided via secret)
+    ##
+    NOVU_SECRET_KEY: ''
+    ## @param api.env.API_CONTEXT_PATH
+    ##
+    API_CONTEXT_PATH: ''
+    ## @param api.env.GLOBAL_CONTEXT_PATH
+    ##
+    GLOBAL_CONTEXT_PATH: ''
     ## @param api.env.MONGO_MIN_POOL_SIZE The min pool size of the MongoDB connection
     ##
     MONGO_MIN_POOL_SIZE: 10
@@ -493,7 +526,7 @@ worker:
   image:
     registry: ghcr.io
     repository: novuhq/novu/worker
-    tag: 0.15.0
+    tag: 3.19.0
     digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -718,6 +751,23 @@ worker:
   ## @param worker.lifecycleHooks for the novu worker container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
+  env:
+    ## @param worker.env.NODE_ENV The environment of the app.
+    ##
+    NODE_ENV: production
+    ## @param worker.env.BROADCAST_QUEUE_CHUNK_SIZE
+    ##
+    BROADCAST_QUEUE_CHUNK_SIZE: 100
+    ## @param worker.env.MULTICAST_QUEUE_CHUNK_SIZE
+    ##
+    MULTICAST_QUEUE_CHUNK_SIZE: 100
+    ## @param worker.env.IS_EMAIL_INLINE_CSS_DISABLED
+    ##
+    IS_EMAIL_INLINE_CSS_DISABLED: false
+    ## @param worker.env.IS_USE_MERGED_DIGEST_ID_ENABLED
+    ##
+    IS_USE_MERGED_DIGEST_ID_ENABLED: false
+
   ## @param worker.extraEnvVars Array with extra environment variables to add to novu worker nodes
   ## e.g:
   ## extraEnvVars:
@@ -787,7 +837,7 @@ ws:
   image:
     registry: ghcr.io
     repository: novuhq/novu/ws
-    tag: 0.15.0
+    tag: 3.19.0
     digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1012,6 +1062,14 @@ ws:
   ## @param ws.lifecycleHooks for the novu ws container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
+  env:
+    ## @param ws.env.NODE_ENV The environment of the app.
+    ##
+    NODE_ENV: production
+    ## @param ws.env.WS_CONTEXT_PATH
+    ##
+    WS_CONTEXT_PATH: ''
+
   ## @param ws.extraEnvVars Array with extra environment variables to add to novu ws nodes
   ## e.g:
   ## extraEnvVars:
@@ -1185,8 +1243,8 @@ web:
   ##
   image:
     registry: ghcr.io
-    repository: novuhq/novu/web
-    tag: 0.15.0
+    repository: novuhq/novu/dashboard
+    tag: 3.19.0
     digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1561,7 +1619,7 @@ web:
 
   ## @param web.port The port on which the Web app should listen on
   ##
-  port: 4200
+  port: 4000
 
   env:
     ## @param web.env.NODE_ENV The environment of the app.
@@ -1709,43 +1767,11 @@ store:
   ##
   encryption-key: '' # you need to change this !
 
-## @section Mongodb configuration
-##
-
-## @param mongodb.enabled Switch to enable or disable the MongoDB helm chart
-## @param mongodb.auth.enabled Enable auth for mongodb database
-## @param mongodb.auth.usernames Array of Name for custom users to create
-## @param mongodb.auth.passwords Array of Password for custom users to create
-## @param mongodb.auth.databases  Array of Name for custom databases to create
-## @param mongodb.architecture mongodb architecture (`standalone` or `replication`)
-## ref : https://docs.bitnami.com/kubernetes/infrastructure/mongodb/get-started/understand-architecture/
-mongodb:
-  enabled: false
-  architecture: standalone
-  auth:
-    enabled: true
-    usernames:
-      - novu_user
-    passwords:
-      - novu_password # you need to change this !
-    databases:
-      - novu_db
-
-## @section Redis configuration
-##
-
-## @param redis.enabled Switch to enable or disable the redis helm chart
-## ref : https://docs.bitnami.com/kubernetes/infrastructure/mongodb/get-started/understand-architecture/
-## @param redis.auth.enabled Enable auth for redis database
-## @param redis.auth.password password for redis database
-## @param redis.architecture redis architecture (`standalone` or `replication`)
-## refhttps://docs.bitnami.com/kubernetes/infrastructure/redis/get-started/understand-cluster-topologies/
-redis:
-  enabled: false
-  architecture: standalone
-  auth:
-    enabled: true
-    password: novu_password # you need to change this !
+novu:
+  ## @param novu.secret-key Secret key used by Novu SDKs for server-to-server authentication
+  ## Please change this for production use !
+  ##
+  secret-key: '' # you need to change this !
 
 ## @section Localstack (S3) configuration
 ##
