@@ -88,6 +88,8 @@ metadata:
   name: {{ include "novu.fullname" . }}-ws
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.ws.service.annotations | nindent 4 }}
 spec:
   type: ClusterIP
   ports:

@@ -143,6 +143,8 @@ metadata:
   name: {{ include "novu.fullname" . }}-api
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.api.service.annotations | nindent 4 }}
 spec:
   type: ClusterIP
   ports:

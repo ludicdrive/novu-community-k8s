@@ -149,6 +149,11 @@ api:
     timeout: 10s
     retries: 3
     startPeriod: 40s
+  service:
+    annotations: {}
+    # Example annotations for dashboard service:
+    # prometheus.io/scrape: "true"
+    # prometheus.io/port: "4000"
 
 # Worker service configuration
 worker:
@@ -196,6 +201,11 @@ worker:
     timeout: 10s
     retries: 3
     startPeriod: 20s
+  service:
+    annotations: {}
+    # Example annotations for dashboard service:
+    # prometheus.io/scrape: "true"
+    # prometheus.io/port: "4000"
 
 # WebSocket service configuration
 ws:
@@ -232,6 +242,11 @@ ws:
     timeout: 10s
     retries: 3
     startPeriod: 40s
+  service:
+    annotations: {}
+    # Example annotations for dashboard service:
+    # prometheus.io/scrape: "true"
+    # prometheus.io/port: "4000"
 
 # Dashboard service configuration
 dashboard:
@@ -258,6 +273,11 @@ dashboard:
     timeout: 10s
     retries: 3
     startPeriod: 40s
+  service:
+    annotations: {}
+    # Example annotations for dashboard service:
+    # prometheus.io/scrape: "true"
+    # prometheus.io/port: "4000"
 
 # Ingress configuration
 ingress:

@@ -125,6 +125,8 @@ metadata:
   name: {{ include "novu.fullname" . }}-worker
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.worker.service.annotations | nindent 4 }}
 spec:
   type: ClusterIP
   ports:

@@ -60,6 +60,8 @@ metadata:
   name: {{ include "novu.fullname" . }}-dashboard
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.dashboard.service.annotations | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
