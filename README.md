@@ -1,79 +1,211 @@
-<div align="center">
-  <a href="https://novu.co?utm_source=github" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
-    <img alt="Novu Logo" src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
-  </picture>
-  </a>
-</div>
+# Novu Helm Chart
 
-<br/>
+A Helm chart for [Novu](https://novu.co/) - Open-source notification infrastructure.
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/@novu/node">
-    <img src="https://img.shields.io/npm/v/@novu/node" alt="NPM">
-  </a>
-  <a href="https://www.npmjs.com/package/@novu/node">
-    <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
-  </a>
-  <a href="https://github.com/novuhq/novu/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
-  </a>
-</p>
+## Prerequisites
 
-<h1 align="center">
-  The open-source notification infrastructure for developers
-</h1>
+- Kubernetes 1.20+
+- Helm 3.x
 
-<div align="center">
-  The ultimate service for managing multi-channel notifications with a single API.
-</div>
+## Installation
 
-<p align="center">
-  <br />
-  <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
-  <br />
+### Step 1: Generate and Create External Secrets (Required)
 
-<br/>
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
-  ·
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
-  ·
-<a href="https://discord.novu.co">Join Our Discord</a>
-  ·
-  <a href="https://roadmap.novu.co">Roadmap</a>
-  ·
-  <a href="https://twitter.com/novuhq">X</a>
-  ·
-  <a href="https://notifications.directory">Notifications Directory</a>
-</p>
+**Before installing**, create the required secrets externally. The chart will NOT overwrite existing secrets.
 
-## ⭐️ What's the repository about?
+```bash
+# Navigate to chart directory
+cd novu
 
-This repository contains unofficial community contributions for the K8s ecosystem.
+# Generate secure random secrets
+export MONGO_PASSWORD=$(openssl rand -base64 32)
+export JWT_SECRET=$(openssl rand -base64 32)
+export STORE_ENCRYPTION_KEY=$(openssl rand -base64 32)
+export NOVU_SECRET_KEY=$(openssl rand -base64 32)
 
-## 📋 Read Our Code Of Conduct
+# Create MongoDB secret (replace <namespace> with your namespace)
+kubectl create secret generic novu-mongodb-secret \
+  --from-literal=username=novu \
+  --from-literal=password=$MONGO_PASSWORD \
+  -n <namespace>
 
-Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you agree to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
+# Create application secrets
+kubectl create secret generic novu-secrets \
+  --from-literal=jwt-secret=$JWT_SECRET \
+  --from-literal=store-encryption-key=$STORE_ENCRYPTION_KEY \
+  --from-literal=novu-secret-key=$NOVU_SECRET_KEY \
+  -n <namespace>
 
-## 💻 Need Help?
+# Optional: AWS credentials (if using S3 storage)
+kubectl create secret generic novu-secrets \
+  --from-literal=aws-access-key-id=<your-aws-key> \
+  --from-literal=aws-secret-access-key=<your-aws-secret> \
+  -n <namespace>
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+# Optional: Sentry DSN (for error tracking)
+kubectl create secret generic novu-secrets \
+  --from-literal=sentry-dsn=<your-sentry-dsn> \
+  -n <namespace>
 
-## 🔗 Links
+# Optional: New Relic License Key (for monitoring)
+kubectl create secret generic novu-secrets \
+  --from-literal=newrelic-license-key=<your-newrelic-key> \
+  -n <namespace>
+```
 
-- [Home page](https://novu.co?utm_campaign=github-readme)
-- [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-readme)
+### Step 2: Create MongoDB Secret (if not created above)
 
-## 🛡️ License
+If you want to manage the MongoDB secret separately:
 
-Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
+```bash
+kubectl create secret generic novu-mongodb-secret \
+  --from-literal=username=novu \
+  --from-literal=password=<your-secure-mongo-password> \
+  -n <namespace>
+```
 
-## 💪 Thanks To All Contributors
+### Step 3: Install with Default Values
 
-Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
+```bash
+helm install novu ./novu -n <namespace>
+```
 
-<a href="https://novu.co/contributors?utm_source=github">
-  <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
-</a>
+### Step 4: Install with Custom Values (Optional)
+
+If you need to customize service configurations:
+
+```bash
+helm install novu ./novu \
+  -f values.yaml \
+  -n <namespace>
+```
+
+### Step 5: Verify Installation
+
+```bash
+# Check pods status
+kubectl get pods -l app.kubernetes.io/name=novu -n <namespace>
+
+# Check services
+kubectl get svc -n <namespace>
+
+# If using ingress, check ingress resources
+kubectl get ingress -n <namespace>
+```
+
+## Configuration
+
+The following tables report the common parameters used in this chart.
+
+### Global Configuration
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `global.mongodb.username` | MongoDB admin username (must match pre-created secret) | `novu` |
+| `global.redis.host` | Redis host | `redis` |
+| `global.redis.port` | Redis port | `6379` |
+| `global.apiPort` | API service port | `3000` |
+| `global.workerPort` | Worker service port | `3004` |
+| `global.wsPort` | WebSocket service port | `3001` |
+
+### Service Configuration
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `redis.enabled` | Enable Redis service | `true` |
+| `mongodb.enabled` | Enable MongoDB service | `true` |
+| `api.enabled` | Enable API service | `true` |
+| `worker.enabled` | Enable Worker service | `true` |
+| `ws.enabled` | Enable WebSocket service | `true` |
+| `dashboard.enabled` | Enable Dashboard service | `true` |
+
+### Ingress Configuration
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `ingress.enabled` | Enable Ingress resource | `false` |
+| `ingress.host` | Hostname for ingress (e.g., novu.example.com) | `` (empty) |
+| `ingress.annotations` | Ingress annotations (Traefik-specific) | `{}` |
+| `ingress.tlsSecretName` | TLS secret name for HTTPS | `` (empty) |
+
+The Ingress routes traffic to:
+- `/` → API service (port 3000)
+- `/ws` → WebSocket service (port 3001)
+- `/dashboard` → Dashboard service (port 4000)
+
+## Usage
+
+### Environment Variables
+
+All sensitive configuration is injected via Kubernetes Secrets. The chart references these secrets in the deployment configurations.
+
+#### Required Secrets (Pre-created externally)
+
+1. **MongoDB Secret** (`novu-mongodb-secret`)
+   - `username`: MongoDB admin username (default: `novu`)
+   - `password`: MongoDB admin password
+
+2. **Application Secrets** (`novu-secrets`)
+   - `jwt-secret`: JWT signing secret (minimum 32 characters)
+   - `store-encryption-key`: Encryption key for sensitive data storage (minimum 32 characters)
+   - `novu-secret-key`: Novu application secret key (minimum 32 characters)
+
+#### Optional Secrets
+
+- `aws-access-key-id`: AWS Access Key ID (for S3 storage)
+- `aws-secret-access-key`: AWS Secret Access Key (for S3 storage)
+- `sentry-dsn`: Sentry DSN for error tracking
+- `newrelic-license-key`: New Relic license key for monitoring
+
+See the "Create External Secrets First" section above for detailed instructions on generating and creating these secrets.
+
+### Important Security Notes
+
+**NEVER commit secrets to version control!** The chart is designed so that:
+1. Secrets are created externally using `kubectl create secret`
+2. The chart references existing secrets (never creates them with values.yaml)
+3. `pre-secrets.yaml` only creates secrets if they don't already exist
+4. On upgrades, the chart will never overwrite pre-created secrets
+
+### Upgrading
+
+To upgrade the release:
+
+```bash
+helm upgrade novu ./novu -n <namespace>
+```
+
+**Important**: The chart will NOT overwrite pre-created secrets. If you need to change secret values, you must delete and recreate them:
+
+```bash
+# Delete existing secrets
+kubectl delete secret novu-mongodb-secret -n <namespace>
+kubectl delete secret novu-secrets -n <namespace>
+
+# Recreate with new values
+kubectl create secret generic novu-mongodb-secret \
+  --from-literal=username=novu \
+  --from-literal=password=<new-password> \
+  -n <namespace>
+
+kubectl create secret generic novu-secrets \
+  --from-literal=jwt-secret=<new-jwt-secret> \
+  --from-literal=store-encryption-key=<new-encryption-key> \
+  --from-literal=novu-secret-key=<new-novu-secret> \
+  -n <namespace>
+
+# Upgrade the release
+helm upgrade novu ./novu -n <namespace>
+```
+
+## Uninstalling
+
+To uninstall/delete the `novu` deployment:
+
+```bash
+helm uninstall novu
+```
+
+## License
+
+This chart is licensed under the MIT License.

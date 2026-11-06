@@ -1,0 +1,170 @@
+{{- if .Values.api.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "novu.fullname" . }}-api
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: novu-api
+      {{- include "novu.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-api
+        {{- include "novu.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          containerName: api
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: API_ROOT_URL
+              value: "{{ .Values.global.apiRootUrl }}"
+            - name: PORT
+              value: "{{ .Values.global.apiPort }}"
+            - name: FRONT_BASE_URL
+              value: "{{ .Values.global.frontBaseURL }}"
+            - name: MONGO_URL
+              value: "{{ .Values.global.mongoUrl }}"
+            - name: MONGO_MIN_POOL_SIZE
+              value: "{{ .Values.global.mongoMinPoolSize }}"
+            - name: MONGO_MAX_POOL_SIZE
+              value: "{{ .Values.global.mongoMaxPoolSize }}"
+            - name: REDIS_HOST
+              value: "{{ .Values.global.redis.host }}"
+            - name: REDIS_PORT
+              value: "{{ .Values.global.redis.port }}"
+            - name: REDIS_PASSWORD
+              value: "{{ .Values.global.redis.password }}"
+            - name: REDIS_DB_INDEX
+              value: "2"
+            - name: REDIS_CACHE_SERVICE_HOST
+              value: "{{ .Values.global.redisCacheServiceHost }}"
+            - name: REDIS_CACHE_SERVICE_PORT
+              value: "{{ .Values.global.redisCacheServicePort }}"
+            - name: S3_LOCAL_STACK
+              value: "{{ .Values.global.s3LocalStack }}"
+            - name: S3_BUCKET_NAME
+              value: "{{ .Values.global.s3BucketName }}"
+            - name: S3_REGION
+              value: "{{ .Values.global.s3Region }}"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: aws-secret-access-key
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: jwt-secret
+            - name: STORE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: store-encryption-key
+            - name: NOVU_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: novu-secret-key
+            - name: SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME
+              value: "{{ .Values.global.subscriberWidgetJwtExpirationTime }}"
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: sentry-dsn
+            - name: NEW_RELIC_ENABLED
+              value: "{{ .Values.global.newRelicEnabled }}"
+            - name: NEW_RELIC_APP_NAME
+              value: "{{ .Values.global.newRelicAppName }}"
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: newrelic-license-key
+            - name: API_CONTEXT_PATH
+              value: "{{ .Values.global.apiContextPath }}"
+            - name: MONGO_AUTO_CREATE_INDEXES
+              value: "{{ .Values.global.mongoAutoCreateIndexes }}"
+            - name: IS_API_IDEMPOTENCY_ENABLED
+              value: "{{ .Values.global.isApiIdempotencyEnabled }}"
+            - name: IS_API_RATE_LIMITING_ENABLED
+              value: "{{ .Values.global.isApiRateLimitingEnabled }}"
+            - name: IS_NEW_MESSAGES_API_RESPONSE_ENABLED
+              value: "{{ .Values.global.isNewMessagesApiResponseEnabled }}"
+            - name: IS_V2_ENABLED
+              value: "{{ .Values.global.isV2Enabled }}"
+            - name: IS_SELF_HOSTED
+              value: "{{ .Values.global.isSelfHosted }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.global.apiPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /v1/health-check
+              port: 3000
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v1/health-check
+              port: 3000
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: api-logs
+              mountPath: /var/log/api
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "novu.fullname" . }}-api
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.global.apiPort }}
+      targetPort: {{ .Values.global.apiPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-api
+    {{- include "novu.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "novu.fullname" . }}-api-logs
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+{{- end }}

@@ -1,16 +1,15 @@
-name: novu
-description: A Helm Chart for novu
-version: 0.1.21
 apiVersion: v2
+name: novu
+description: A Helm chart for Novu - Open-source notification infrastructure
+type: application
+version: 0.1.22
 appVersion: 3.19.0
 keywords:
   - novu
-  - notification framework
-sources:
-  - https://github.com/novuhq/novu/tree/next/docker/kubernetes/helm
+  - notification
+  - messaging
+  - real-time
 home: https://novu.co/
-dependencies:
-  - condition: localstack.enabled
-    name: localstack
-    repository: https://localstack.github.io/helm-charts
-    version: 0.4.x
+maintainers:
+  - name: Ludic Drive
+    email: contact@ludicdrive.com

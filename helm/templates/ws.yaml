@@ -1,0 +1,115 @@
+{{- if .Values.ws.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "novu.fullname" . }}-ws
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: novu-ws
+      {{- include "novu.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-ws
+        {{- include "novu.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-ws
+          image: "{{ .Values.ws.image.repository }}:{{ .Values.ws.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          containerName: ws
+          resources:
+            {{- toYaml .ws.resources | nindent 12 }}
+          env:
+            - name: PORT
+              value: "{{ .Values.global.wsPort }}"
+            - name: NODE_ENV
+              value: production
+            - name: MONGO_URL
+              value: "{{ .Values.global.mongoUrl }}"
+            - name: MONGO_MIN_POOL_SIZE
+              value: "{{ .Values.global.mongoMinPoolSize }}"
+            - name: MONGO_MAX_POOL_SIZE
+              value: "{{ .Values.global.mongoMaxPoolSize }}"
+            - name: REDIS_HOST
+              value: "{{ .Values.global.redis.host }}"
+            - name: REDIS_PORT
+              value: "{{ .Values.global.redis.port }}"
+            - name: REDIS_PASSWORD
+              value: "{{ .Values.global.redis.password }}"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: jwt-secret
+            - name: WS_CONTEXT_PATH
+              value: "{{ .Values.global.wsContextPath }}"
+            - name: NEW_RELIC_ENABLED
+              value: "{{ .Values.global.newRelicEnabled }}"
+            - name: NEW_RELIC_APP_NAME
+              value: "{{ .Values.global.newRelicAppName }}"
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "novu.fullname" . }}-secrets
+                  key: newrelic-license-key
+          ports:
+            - name: http
+              containerPort: {{ .Values.global.wsPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /v1/health-check
+              port: 3001
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v1/health-check
+              port: 3001
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: ws-logs
+              mountPath: /var/log/ws
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "novu.fullname" . }}-ws
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.global.wsPort }}
+      targetPort: {{ .Values.global.wsPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-ws
+    {{- include "novu.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "novu.fullname" . }}-ws-logs
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+{{- end }}

@@ -1,0 +1,92 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "novu.fullname" . }}
+  labels:
+    {{- include "novu.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+{{- if .Values.ingress.annotations }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+{{- end }}
+spec:
+  ingressClassName: traefik
+  rules:
+    {{- if .Values.ingress.host }}
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          {{- if .Values.api.enabled }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "novu.fullname" . }}-api
+                port:
+                  number: {{ .Values.global.apiPort }}
+          {{- end }}
+          {{- if .Values.ws.enabled }}
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "novu.fullname" . }}-ws
+                port:
+                  number: {{ .Values.global.wsPort }}
+          {{- end }}
+          {{- if .Values.dashboard.enabled }}
+          - path: /dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "novu.fullname" . }}-dashboard
+                port:
+                  number: 4000
+          {{- end }}
+    {{- else }}
+    - host: ""
+      http:
+        paths:
+          {{- if .Values.api.enabled }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "novu.fullname" . }}-api
+                port:
+                  number: {{ .Values.global.apiPort }}
+          {{- end }}
+          {{- if .Values.ws.enabled }}
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "novu.fullname" . }}-ws
+                port:
+                  number: {{ .Values.global.wsPort }}
+          {{- end }}
+          {{- if .Values.dashboard.enabled }}
+          - path: /dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "novu.fullname" . }}-dashboard
+                port:
+                  number: 4000
+          {{- end }}
+    {{- end }}
+{{- if .Values.ingress.tlsSecretName }}
+  tls:
+    - hosts:
+        {{- if .Values.ingress.host }}
+        - {{ .Values.ingress.host }}
+        {{- else }}
+        - "{{ include "novu.fullname" . }}"
+        {{- end }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
+{{- end }}
+---
+{{- end }}
