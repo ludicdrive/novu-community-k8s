@@ -29,6 +29,13 @@ spec:
               value: "{{ .Values.global.viteApiHostname }}"
             - name: VITE_WEBSOCKET_HOSTNAME
               value: "{{ .Values.global.viteWebSocketHostname }}"
+          volumes:
+            - name: dashboard-logs
+              persistentVolumeClaim:
+                claimName: {{ include "novu.fullname" . }}-dashboard-logs
+            - name: mongodb-data
+              persistentVolumeClaim:
+                claimName: {{ include "novu.fullname" . }}-mongodb-data
           ports:
             - name: http
               containerPort: 4000
@@ -49,10 +56,6 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 10
             failureThreshold: 3
-          volumeMounts:
-            - name: dashboard-logs
-              mountPath: /var/log/dashboard
-              readOnly: true
 ---
 apiVersion: v1
 kind: Service

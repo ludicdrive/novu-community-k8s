@@ -112,6 +112,13 @@ spec:
               value: "{{ .Values.global.isV2Enabled }}"
             - name: IS_SELF_HOSTED
               value: "{{ .Values.global.isSelfHosted }}"
+          volumes:
+            - name: api-logs
+              persistentVolumeClaim:
+                claimName: {{ include "novu.fullname" . }}-api-logs
+            - name: mongodb-data
+              persistentVolumeClaim:
+                claimName: {{ include "novu.fullname" . }}-mongodb-data
           ports:
             - name: http
               containerPort: {{ .Values.global.apiPort }}
@@ -132,10 +139,6 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 10
             failureThreshold: 3
-          volumeMounts:
-            - name: api-logs
-              mountPath: /var/log/api
-              readOnly: true
 ---
 apiVersion: v1
 kind: Service
@@ -154,17 +157,4 @@ spec:
       name: http
   selector:
     app.kubernetes.io/name: novu-api
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "novu.fullname" . }}-api-logs
-  labels: {}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 {{- end }}

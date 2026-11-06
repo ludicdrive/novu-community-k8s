@@ -77,10 +77,6 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 10
             failureThreshold: 3
-          volumeMounts:
-            - name: ws-logs
-              mountPath: /var/log/ws
-              readOnly: true
 ---
 apiVersion: v1
 kind: Service
@@ -99,17 +95,4 @@ spec:
       name: http
   selector:
     app.kubernetes.io/name: novu-ws
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "novu.fullname" . }}-ws-logs
-  labels: {}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 {{- end }}

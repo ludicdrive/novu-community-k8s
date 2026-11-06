@@ -33,6 +33,13 @@ spec:
           command:
             - docker-entrypoint.sh
             - redis-server
+          volumes:
+            - name: redis-logs
+              persistentVolumeClaim:
+                claimName: {{ include "novu.fullname" . }}-redis-logs
+            - name: mongodb-data
+              persistentVolumeClaim:
+                claimName: {{ include "novu.fullname" . }}-mongodb-data
           env: []
           ports:
             - name: redis
@@ -62,10 +69,6 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 5
             {{- end }}
-          volumeMounts:
-            - name: redis-logs
-              mountPath: /var/log/redis
-              readOnly: true
 ---
 apiVersion: v1
 kind: Service
@@ -82,17 +85,4 @@ spec:
       name: redis
   selector:
     app.kubernetes.io/name: redis
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "novu.fullname" . }}-redis-logs
-  labels:
-    {{- include "novu.labels" . | nindent 4 }}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
 {{- end }}

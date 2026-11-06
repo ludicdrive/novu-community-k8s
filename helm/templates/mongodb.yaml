@@ -63,9 +63,10 @@ spec:
           volumeMounts:
             - name: mongodb-data
               mountPath: /data/db
-            - name: mongodb-logs
-              mountPath: /var/log/mongodb
-              readOnly: true
+      volumes:
+      - name: mongodb-data
+        persistentVolumeClaim:
+          claimName: {{ include "novu.fullname" . }}-mongodb-data
 ---
 apiVersion: v1
 kind: Service
@@ -98,17 +99,4 @@ spec:
   resources:
     requests:
       storage: {{ .Values.mongodb.persistence.size | default "8Gi" }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "novu.fullname" . }}-mongodb-logs
-  labels:
-    {{- include "novu.labels" . | nindent 4 }}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
 {{- end }}
