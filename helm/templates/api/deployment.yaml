@@ -218,7 +218,7 @@ spec:
           {{- else if .Values.api.livenessProbe.enabled }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.api.livenessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s%s/v1/health-check" .Values.api.env.GLOBAL_CONTEXT_PATH .Values.api.env.API_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- if .Values.api.customReadinessProbe }}
@@ -226,7 +226,7 @@ spec:
           {{- else if .Values.api.readinessProbe.enabled }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.api.readinessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s%s/v1/health-check" .Values.api.env.GLOBAL_CONTEXT_PATH .Values.api.env.API_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- if .Values.api.customStartupProbe }}
@@ -234,7 +234,7 @@ spec:
           {{- else if .Values.api.startupProbe.enabled }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.api.startupProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s%s/v1/health-check" .Values.api.env.GLOBAL_CONTEXT_PATH .Values.api.env.API_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- end }}

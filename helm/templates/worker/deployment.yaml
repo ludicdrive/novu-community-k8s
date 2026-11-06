@@ -194,7 +194,7 @@ spec:
           {{- else if .Values.worker.livenessProbe.enabled }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.worker.livenessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s/v1/health-check" .Values.worker.env.GLOBAL_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- if .Values.worker.customReadinessProbe }}
@@ -202,7 +202,7 @@ spec:
           {{- else if .Values.worker.readinessProbe.enabled }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.worker.readinessProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s/v1/health-check" .Values.worker.env.GLOBAL_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- if .Values.worker.customStartupProbe }}
@@ -210,7 +210,7 @@ spec:
           {{- else if .Values.worker.startupProbe.enabled }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.worker.startupProbe "enabled") "context" $) | nindent 12 }}
             httpGet:
-              path: /v1/health-check
+              path: {{ printf "/%s/v1/health-check" .Values.worker.env.GLOBAL_CONTEXT_PATH | replace "//" "/" }}
               port: http
           {{- end }}
           {{- end }}
