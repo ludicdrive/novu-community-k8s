@@ -19,7 +19,8 @@ spec:
       app.kubernetes.io/name: redis
   template:
     metadata:
-      labels: {}
+      labels:
+        app.kubernetes.io/name: novu-redis
     spec:
       containers:
         - name: {{ .Chart.Name }}-redis
