@@ -29,10 +29,6 @@ spec:
               value: "{{ .Values.global.viteApiHostname }}"
             - name: VITE_WEBSOCKET_HOSTNAME
               value: "{{ .Values.global.viteWebSocketHostname }}"
-          volumes:
-            - name: mongodb-data
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-mongodb-data
           ports:
             - name: http
               containerPort: 4000
@@ -71,17 +67,4 @@ spec:
       name: http
   selector:
     app.kubernetes.io/name: novu-dashboard
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "novu.fullname" . }}-dashboard-logs
-  labels: {}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 {{- end }}

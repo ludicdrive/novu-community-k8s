@@ -112,10 +112,6 @@ spec:
               value: "{{ .Values.global.isV2Enabled }}"
             - name: IS_SELF_HOSTED
               value: "{{ .Values.global.isSelfHosted }}"
-          volumes:
-            - name: mongodb-data
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-mongodb-data
           ports:
             - name: http
               containerPort: {{ .Values.global.apiPort }}

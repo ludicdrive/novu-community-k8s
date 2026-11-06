@@ -33,10 +33,6 @@ spec:
           command:
             - docker-entrypoint.sh
             - redis-server
-          volumes:
-            - name: mongodb-data
-              persistentVolumeClaim:
-                claimName: {{ include "novu.fullname" . }}-mongodb-data
           env: []
           ports:
             - name: redis
