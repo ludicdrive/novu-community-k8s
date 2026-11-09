@@ -90,6 +90,10 @@ global:
   isV2Enabled: "false"
   isSelfHosted: "true"
 
+  # Set to "true" to disable public /auth/register. Create the first admin
+  # account before enabling this, otherwise nobody can sign up.
+  disableUserRegistration: "false"
+
   # Worker tuning
   broadcastQueueChunkSize: "100"
   multicastQueueChunkSize: "100"

@@ -33,6 +33,9 @@ global:
 
   isSelfHosted: "true"
 
+  # Set to "true" after creating the first admin to make onboarding invite-only.
+  disableUserRegistration: "false"
+
 redis:
   enabled: true
   image:

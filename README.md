@@ -107,6 +107,7 @@ The following tables report the common parameters used in this chart.
 | `global.apiPort` | API service port | `3000` |
 | `global.workerPort` | Worker service port | `3004` |
 | `global.wsPort` | WebSocket service port | `3001` |
+| `global.disableUserRegistration` | Disable public `/auth/register` (invite-only onboarding) | `false` |
 
 ### Service Configuration
 
@@ -135,6 +136,22 @@ The Ingress routes traffic to:
 
 `global.apiContextPath` and `global.wsContextPath` must match these paths
 (default: `/api` and `/ws`).
+
+### User Registration
+
+There is no built-in "approve signup" flow in self-hosted Novu. Public
+registration creates a new user and a new, isolated organization.
+
+To make onboarding invite-only:
+
+1. Create the first admin account via `/auth/sign-up`.
+2. Set `global.disableUserRegistration: "true"` and upgrade.
+3. Invite users from the dashboard (Settings → Team/Members → Invite).
+
+Invite emails are sent through a Novu workflow and require a configured
+`NOVU_API_KEY` plus an email integration. Without those, the invite is still
+created: read the token from the `members` collection (`invite.token`) and
+share `https://<dashboard-url>/auth/invitation/<token>` manually.
 
 ## Usage
 

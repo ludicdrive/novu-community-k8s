@@ -135,6 +135,8 @@ spec:
               value: {{ .Values.global.isV2Enabled | quote }}
             - name: IS_SELF_HOSTED
               value: {{ .Values.global.isSelfHosted | quote }}
+            - name: DISABLE_USER_REGISTRATION
+              value: {{ .Values.global.disableUserRegistration | default "false" | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.global.apiPort }}
