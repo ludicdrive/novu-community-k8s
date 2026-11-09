@@ -19,16 +19,15 @@ spec:
         - name: {{ .Chart.Name }}-dashboard
           image: "{{ .Values.dashboard.image.repository }}:{{ .Values.dashboard.image.tag }}"
           imagePullPolicy: IfNotPresent
-          containerName: dashboard
-       {{- if .Values.dashboard.resources }}
-         resources:
+          {{- if .Values.dashboard.resources }}
+          resources:
             {{- toYaml .Values.dashboard.resources | nindent 12 }}
-      {{- end }}
+          {{- end }}
           env:
             - name: VITE_API_HOSTNAME
-              value: "{{ .Values.global.viteApiHostname }}"
+              value: {{ .Values.global.viteApiHostname | quote }}
             - name: VITE_WEBSOCKET_HOSTNAME
-              value: "{{ .Values.global.viteWebSocketHostname }}"
+              value: {{ .Values.global.viteWebSocketHostname | quote }}
           ports:
             - name: http
               containerPort: 4000
@@ -56,8 +55,10 @@ metadata:
   name: {{ include "novu.fullname" . }}-dashboard
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  {{- with .Values.dashboard.service.annotations }}
   annotations:
-    {{- toYaml .Values.dashboard.service.annotations | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: ClusterIP
   ports:

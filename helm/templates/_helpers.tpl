@@ -51,6 +51,82 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Normalize a URL context path: ensure a single leading slash and no trailing slash.
+An empty value stays empty.
+*/}}
+{{- define "novu.normalizeContextPath" -}}
+{{- $path := . | default "" | toString -}}
+{{- if $path -}}
+{{- if not (hasPrefix "/" $path) -}}
+{{- $path = printf "/%s" $path -}}
+{{- end -}}
+{{- $path = trimSuffix "/" $path -}}
+{{- end -}}
+{{- $path -}}
+{{- end }}
+
+{{/*
+Hostname of the MongoDB service.
+*/}}
+{{- define "novu.mongodb.host" -}}
+{{- if .Values.mongodb.enabled -}}
+{{- printf "%s-mongodb" (include "novu.fullname" .) -}}
+{{- else -}}
+{{- .Values.global.mongodb.host | default "mongodb" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Hostname of the Redis service.
+*/}}
+{{- define "novu.redis.host" -}}
+{{- if .Values.redis.enabled -}}
+{{- printf "%s-redis" (include "novu.fullname" .) -}}
+{{- else -}}
+{{- .Values.global.redis.host | default "redis" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+MongoDB connection string. When no explicit URL is configured it is composed
+from the credentials in the MongoDB secret at container runtime.
+*/}}
+{{- define "novu.mongoUrl" -}}
+{{- if .Values.global.mongoUrl -}}
+{{- .Values.global.mongoUrl -}}
+{{- else -}}
+{{- $credentials := "" -}}
+{{- if .Values.mongodb.enabled -}}
+{{- $credentials = "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@" -}}
+{{- else -}}
+{{- $credentials = "mongodb://" -}}
+{{- end -}}
+{{- printf "%s%s:27017/%s?authSource=admin" $credentials (include "novu.mongodb.host" .) (.Values.global.mongodb.database | default "novu") -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Internal URL of the API service.
+*/}}
+{{- define "novu.apiUrl" -}}
+{{- $contextPath := include "novu.normalizeContextPath" .Values.global.apiContextPath -}}
+{{- printf "http://%s-api.%s.svc.cluster.local:%v%s" (include "novu.fullname" .) .Release.Namespace .Values.global.apiPort $contextPath -}}
+{{- end }}
+
+{{/*
+Health check paths.
+*/}}
+{{- define "novu.api.healthPath" -}}
+{{- $contextPath := include "novu.normalizeContextPath" .Values.global.apiContextPath -}}
+{{- printf "%s/v1/health-check" $contextPath -}}
+{{- end }}
+
+{{- define "novu.ws.healthPath" -}}
+{{- $contextPath := include "novu.normalizeContextPath" .Values.global.wsContextPath -}}
+{{- printf "%s/v1/health-check" $contextPath -}}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "novu.serviceAccountName" -}}

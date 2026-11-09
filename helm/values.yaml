@@ -5,34 +5,98 @@
 # IMPORTANT: Secrets Management
 # ----------------------------
 # For security, sensitive secrets should be created externally and managed outside of Helm values.
-# The chart provides pre-secrets.yaml which will only create secrets if they don't already exist.
-# See README.md for instructions on creating these secrets.
-# Required secrets: mongodb (username/password), application secrets (jwt-secret, store-encryption-key, novu-secret-key)
+# The chart creates the secrets only if they do not already exist (see pre-secrets.yaml and
+# secrets.yaml). If a value below is left empty and the secret does not exist yet, a random
+# value is generated on first install.
+#
+# Required secrets: mongodb (username/password), application secrets
+# (jwt-secret, store-encryption-key, novu-secret-key)
 
 global:
-  # MongoDB configuration (username/password should be pre-created secrets)
-  # These values are used as defaults but credentials come from pre-created secrets
+  # MongoDB connection settings
   mongodb:
-    username: "novu"  # Must match the username in pre-created mongodb secret
-    password: ""      # Should be empty if using pre-created secret with password
+    # Used when the mongodb secret is created by the chart and for the
+    # default connection URL.
+    username: "novu"
+    password: ""
+    # Used only when mongodb.enabled=false
+    host: "mongodb"
+    database: "novu"
 
-  # Redis configuration (for both Redis and Redis Cache)
+  # Redis connection settings
   redis:
-
-  # Redis configuration (for both Redis and Redis Cache)
-  redis:
-
-  # Redis configuration (for both Redis and Redis Cache)
-  redis:
+    # Used only when redis.enabled=false
     host: "redis"
     port: "6379"
     password: ""
     dbIndex: "2"
 
+  # Explicit MongoDB URL. Leave empty to build it from the mongodb secret.
+  mongoUrl: ""
+
+  # Public URL of the API (used for links in notifications/emails)
+  apiRootUrl: "http://localhost:3000"
+  # Public URL of the dashboard
+  frontBaseURL: "http://localhost:4000"
+  dashboardUrl: ""
+
+  # URL context paths used by the services. Must match the Ingress paths below.
+  globalContextPath: ""
+  apiContextPath: ""
+  wsContextPath: ""
+
   # Service ports
   apiPort: "3000"
   workerPort: "3004"
   wsPort: "3001"
+
+  # Dashboard runtime configuration. Use absolute URLs that include the
+  # configured context paths, e.g. https://novu.example.com/api
+  viteApiHostname: ""
+  viteWebSocketHostname: ""
+
+  # MongoDB connection pool
+  mongoMinPoolSize: "1"
+  mongoMaxPoolSize: "10"
+  mongoAutoCreateIndexes: "true"
+
+  # Redis cache (leave empty to use the main Redis instance)
+  redisCacheServiceHost: ""
+  redisCacheServicePort: ""
+
+  # S3 storage (optional)
+  s3LocalStack: "false"
+  s3BucketName: ""
+  s3Region: "us-east-1"
+  awsAccessKeyId: ""
+  awsSecretAccessKey: ""
+
+  # Application secrets. Leave empty to generate/preserve them on install.
+  jwtSecret: ""
+  storeEncryptionKey: ""
+  novuSecretKey: ""
+
+  # Optional monitoring
+  sentryDsn: ""
+  newRelicEnabled: "false"
+  newRelicAppName: "novu"
+  newRelicLicenseKey: ""
+
+  # Feature flags
+  subscriberWidgetJwtExpirationTime: "15 days"
+  isApiIdempotencyEnabled: "true"
+  isApiRateLimitingEnabled: "true"
+  isNewMessagesApiResponseEnabled: "true"
+  isV2Enabled: "false"
+  isSelfHosted: "true"
+
+  # Worker tuning
+  broadcastQueueChunkSize: "100"
+  multicastQueueChunkSize: "100"
+  isEmailInlineCssDisabled: "false"
+  isUseMergedDigestIdEnabled: "true"
+
+  logLevel: "info"
 
 # Redis service configuration
 redis:
@@ -40,20 +104,9 @@ redis:
   image:
     repository: redis
     tag: alpine
-  containerName: redis
   resources: {}
-  # Logging config (same as docker-compose)
-  logging:
-    driver: json-file
-    options:
-      max-size: "50m"
-      max-file: "5"
   healthcheck:
     enabled: true
-    test: ["CMD", "redis-cli", "ping"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
 
 # MongoDB service configuration
 mongodb:
@@ -61,38 +114,11 @@ mongodb:
   image:
     repository: mongo
     tag: "8.0.17"
-  containerName: mongodb
   resources: {}
-  # Logging config (same as docker-compose)
-  logging:
-    driver: json-file
-    options:
-      max-size: "50m"
-      max-file: "5"
   persistence:
     enabled: true
     storageClass: ""
     size: 8Gi
-  # Environment variables are set from pre-created secrets (see mongodb secret)
-  environment:
-    MONGO_INITDB_ROOT_USERNAME: ""
-    MONGO_INITDB_ROOT_PASSWORD: ""
-  healthcheck:
-    enabled: true
-    test:
-      - CMD
-      - mongosh
-      - --quiet
-      - --username
-      - "{{ .Values.global.mongodb.username }}"
-      - --password
-      - "{{ .Values.global.mongodb.password }}"
-      - --eval
-      - db.adminCommand('ping').ok
-    interval: 20s
-    timeout: 5s
-    retries: 5
-    startPeriod: 20s
 
 # API service configuration
 api:
@@ -100,60 +126,9 @@ api:
   image:
     repository: ghcr.io/novuhq/novu/api
     tag: "3.19.0"
-  containerName: api
   resources: {}
-  ports:
-    http:
-      port: "{{ .Values.global.apiPort }}"
-      target: "{{ .Values.global.apiPort }}"
-  environment:
-    NODE_ENV: production
-    API_ROOT_URL: ""
-    PORT: "{{ .Values.global.apiPort }}"
-    FRONT_BASE_URL: ""
-    MONGO_URL: ""
-    MONGO_MIN_POOL_SIZE: "1"
-    MONGO_MAX_POOL_SIZE: "10"
-    REDIS_HOST: "{{ .Values.global.redis.host }}"
-    REDIS_PORT: "{{ .Values.global.redis.port }}"
-    REDIS_PASSWORD: ""
-    REDIS_DB_INDEX: "2"
-    REDIS_CACHE_SERVICE_HOST: ""
-    REDIS_CACHE_SERVICE_PORT: ""
-    S3_LOCAL_STACK: ""
-    S3_BUCKET_NAME: ""
-    S3_REGION: ""
-    AWS_ACCESS_KEY_ID: ""
-    AWS_SECRET_ACCESS_KEY: ""
-    JWT_SECRET: ""
-    STORE_ENCRYPTION_KEY: ""
-    NOVU_SECRET_KEY: ""
-    SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ""
-    SENTRY_DSN: ""
-    NEW_RELIC_ENABLED: "false"
-    NEW_RELIC_APP_NAME: ""
-    NEW_RELIC_LICENSE_KEY: ""
-    API_CONTEXT_PATH: ""
-    MONGO_AUTO_CREATE_INDEXES: "true"
-    IS_API_IDEMPOTENCY_ENABLED: "true"
-    IS_API_RATE_LIMITING_ENABLED: "true"
-    IS_NEW_MESSAGES_API_RESPONSE_ENABLED: "true"
-    IS_V2_ENABLED: "false"
-    IS_SELF_HOSTED: "false"
-  healthcheck:
-    enabled: true
-    test:
-      - CMD-SHELL
-      - wget --no-verbose --tries=1 --spider http://localhost:${API_PORT}/v1/health-check || exit 1
-    interval: 20s
-    timeout: 10s
-    retries: 3
-    startPeriod: 40s
   service:
     annotations: {}
-    # Example annotations for dashboard service:
-    # prometheus.io/scrape: "true"
-    # prometheus.io/port: "4000"
 
 # Worker service configuration
 worker:
@@ -161,51 +136,9 @@ worker:
   image:
     repository: ghcr.io/novuhq/novu/worker
     tag: "3.19.0"
-  containerName: worker
   resources: {}
-  ports: {}
-  environment:
-    NODE_ENV: production
-    PORT: "{{ .Values.global.workerPort }}"
-    MONGO_URL: ""
-    MONGO_MIN_POOL_SIZE: "1"
-    MONGO_MAX_POOL_SIZE: "10"
-    REDIS_HOST: "{{ .Values.global.redis.host }}"
-    REDIS_PORT: "{{ .Values.global.redis.port }}"
-    REDIS_PASSWORD: ""
-    REDIS_DB_INDEX: "2"
-    REDIS_CACHE_SERVICE_HOST: ""
-    REDIS_CACHE_SERVICE_PORT: ""
-    S3_LOCAL_STACK: ""
-    S3_BUCKET_NAME: ""
-    S3_REGION: ""
-    AWS_ACCESS_KEY_ID: ""
-    AWS_SECRET_ACCESS_KEY: ""
-    STORE_ENCRYPTION_KEY: ""
-    SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ""
-    SENTRY_DSN: ""
-    NEW_RELIC_ENABLED: "false"
-    NEW_RELIC_APP_NAME: ""
-    NEW_RELIC_LICENSE_KEY: ""
-    BROADCAST_QUEUE_CHUNK_SIZE: "100"
-    MULTICAST_QUEUE_CHUNK_SIZE: "100"
-    API_ROOT_URL: "http://api:{{ .Values.global.apiPort }}"
-    IS_EMAIL_INLINE_CSS_DISABLED: "false"
-    IS_USE_MERGED_DIGEST_ID_ENABLED: "true"
-  healthcheck:
-    enabled: true
-    test:
-      - CMD-SHELL
-      - wget --no-verbose --tries=1 --spider http://localhost:${WORKER_PORT:-3004}/v1/health-check || exit 1
-    interval: 20s
-    timeout: 10s
-    retries: 3
-    startPeriod: 20s
   service:
     annotations: {}
-    # Example annotations for dashboard service:
-    # prometheus.io/scrape: "true"
-    # prometheus.io/port: "4000"
 
 # WebSocket service configuration
 ws:
@@ -213,40 +146,9 @@ ws:
   image:
     repository: ghcr.io/novuhq/novu/ws
     tag: "3.19.0"
-  containerName: ws
   resources: {}
-  ports:
-    http:
-      port: "{{ .Values.global.wsPort }}"
-      target: "{{ .Values.global.wsPort }}"
-  environment:
-    PORT: "{{ .Values.global.wsPort }}"
-    NODE_ENV: production
-    MONGO_URL: ""
-    MONGO_MIN_POOL_SIZE: "1"
-    MONGO_MAX_POOL_SIZE: "10"
-    REDIS_HOST: "{{ .Values.global.redis.host }}"
-    REDIS_PORT: "{{ .Values.global.redis.port }}"
-    REDIS_PASSWORD: ""
-    JWT_SECRET: ""
-    WS_CONTEXT_PATH: ""
-    NEW_RELIC_ENABLED: "false"
-    NEW_RELIC_APP_NAME: ""
-    NEW_RELIC_LICENSE_KEY: ""
-  healthcheck:
-    enabled: true
-    test:
-      - CMD-SHELL
-      - wget --no-verbose --tries=1 --spider http://localhost:${WS_PORT}/v1/health-check || exit 1
-    interval: 20s
-    timeout: 10s
-    retries: 3
-    startPeriod: 40s
   service:
     annotations: {}
-    # Example annotations for dashboard service:
-    # prometheus.io/scrape: "true"
-    # prometheus.io/port: "4000"
 
 # Dashboard service configuration
 dashboard:
@@ -254,45 +156,13 @@ dashboard:
   image:
     repository: ghcr.io/novuhq/novu/dashboard
     tag: "3.19.0"
-  containerName: dashboard
   resources: {}
-  ports:
-    http:
-      port: 4000
-      target: 4000
-  environment:
-    VITE_API_HOSTNAME: ""
-    VITE_WEBSOCKET_HOSTNAME: ""
-  healthcheck:
-    enabled: true
-    test:
-      - CMD-SHELL
-      - |
-        node -e "const http = require('http'); const req = http.get({hostname: 'localhost', port: 4000, path: '/'}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.on('timeout', () => { req.destroy(); process.exit(1); })"
-    interval: 20s
-    timeout: 10s
-    retries: 3
-    startPeriod: 40s
   service:
     annotations: {}
-    # Example annotations for dashboard service:
-    # prometheus.io/scrape: "true"
-    # prometheus.io/port: "4000"
 
 # Ingress configuration
 ingress:
   enabled: false
   host: ""
   annotations: {}
-  # Example annotations for Traefik:
-  # traefik.ingress.kubernetes.io/ssl-redirect: 'true'
   tlsSecretName: ""
-
-# Common settings for all services
-common:
-  restartPolicy: UnlessStopped
-  logging:
-    driver: json-file
-    options:
-      max-size: "50m"
-      max-file: "5"

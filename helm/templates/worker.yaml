@@ -1,4 +1,6 @@
 {{- if .Values.worker.enabled }}
+{{- $secretName := printf "%s-secrets" (include "novu.fullname" .) }}
+{{- $mongodbSecretName := printf "%s-mongodb-secret" (include "novu.fullname" .) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,95 +21,120 @@ spec:
         - name: {{ .Chart.Name }}-worker
           image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
           imagePullPolicy: IfNotPresent
-          containerName: worker
+          {{- if .Values.worker.resources }}
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
+          {{- end }}
           env:
             - name: NODE_ENV
               value: production
+            - name: LOG_LEVEL
+              value: {{ .Values.global.logLevel | default "info" | quote }}
             - name: PORT
-              value: "{{ .Values.global.workerPort }}"
+              value: {{ .Values.global.workerPort | quote }}
+            {{- if .Values.mongodb.enabled }}
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $mongodbSecretName }}
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $mongodbSecretName }}
+                  key: password
+            {{- end }}
             - name: MONGO_URL
-              value: "{{ .Values.global.mongoUrl }}"
+              value: {{ include "novu.mongoUrl" . | quote }}
             - name: MONGO_MIN_POOL_SIZE
-              value: "{{ .Values.global.mongoMinPoolSize }}"
+              value: {{ .Values.global.mongoMinPoolSize | quote }}
             - name: MONGO_MAX_POOL_SIZE
-              value: "{{ .Values.global.mongoMaxPoolSize }}"
+              value: {{ .Values.global.mongoMaxPoolSize | quote }}
+            - name: MONGO_AUTO_CREATE_INDEXES
+              value: {{ .Values.global.mongoAutoCreateIndexes | quote }}
             - name: REDIS_HOST
-              value: "{{ .Values.global.redis.host }}"
+              value: {{ include "novu.redis.host" . | quote }}
             - name: REDIS_PORT
-              value: "{{ .Values.global.redis.port }}"
+              value: {{ .Values.global.redis.port | quote }}
             - name: REDIS_PASSWORD
-              value: "{{ .Values.global.redis.password }}"
+              value: {{ .Values.global.redis.password | quote }}
             - name: REDIS_DB_INDEX
-              value: "2"
+              value: {{ .Values.global.redis.dbIndex | quote }}
             - name: REDIS_CACHE_SERVICE_HOST
-              value: "{{ .Values.global.redisCacheServiceHost }}"
+              value: {{ .Values.global.redisCacheServiceHost | quote }}
             - name: REDIS_CACHE_SERVICE_PORT
-              value: "{{ .Values.global.redisCacheServicePort }}"
+              value: {{ .Values.global.redisCacheServicePort | quote }}
             - name: S3_LOCAL_STACK
-              value: "{{ .Values.global.s3LocalStack }}"
+              value: {{ .Values.global.s3LocalStack | quote }}
             - name: S3_BUCKET_NAME
-              value: "{{ .Values.global.s3BucketName }}"
+              value: {{ .Values.global.s3BucketName | quote }}
             - name: S3_REGION
-              value: "{{ .Values.global.s3Region }}"
+              value: {{ .Values.global.s3Region | quote }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: aws-access-key-id
+                  optional: true
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: aws-secret-access-key
+                  optional: true
             - name: STORE_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: store-encryption-key
             - name: SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME
-              value: "{{ .Values.global.subscriberWidgetJwtExpirationTime }}"
+              value: {{ .Values.global.subscriberWidgetJwtExpirationTime | quote }}
             - name: SENTRY_DSN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: sentry-dsn
+                  optional: true
             - name: NEW_RELIC_ENABLED
-              value: "{{ .Values.global.newRelicEnabled }}"
+              value: {{ .Values.global.newRelicEnabled | quote }}
             - name: NEW_RELIC_APP_NAME
-              value: "{{ .Values.global.newRelicAppName }}"
+              value: {{ .Values.global.newRelicAppName | quote }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: newrelic-license-key
+                  optional: true
             - name: BROADCAST_QUEUE_CHUNK_SIZE
-              value: "{{ .Values.global.broadcastQueueChunkSize }}"
+              value: {{ .Values.global.broadcastQueueChunkSize | quote }}
             - name: MULTICAST_QUEUE_CHUNK_SIZE
-              value: "{{ .Values.global.multicastQueueChunkSize }}"
+              value: {{ .Values.global.multicastQueueChunkSize | quote }}
             - name: API_ROOT_URL
-              value: "http://api:{{ .Values.global.apiPort }}"
+              value: {{ include "novu.apiUrl" . | quote }}
+            - name: GLOBAL_CONTEXT_PATH
+              value: {{ include "novu.normalizeContextPath" .Values.global.globalContextPath | quote }}
+            - name: API_CONTEXT_PATH
+              value: {{ include "novu.normalizeContextPath" .Values.global.apiContextPath | quote }}
             - name: IS_EMAIL_INLINE_CSS_DISABLED
-              value: "{{ .Values.global.isEmailInlineCssDisabled }}"
+              value: {{ .Values.global.isEmailInlineCssDisabled | quote }}
             - name: IS_USE_MERGED_DIGEST_ID_ENABLED
-              value: "{{ .Values.global.isUseMergedDigestIdEnabled }}"
+              value: {{ .Values.global.isUseMergedDigestIdEnabled | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.global.workerPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /v1/health-check
-              port: 3004
+              path: {{ include "novu.api.healthPath" . | quote }}
+              port: {{ .Values.global.workerPort }}
             initialDelaySeconds: 20
             periodSeconds: 20
             timeoutSeconds: 10
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /v1/health-check
-              port: 3004
+              path: {{ include "novu.api.healthPath" . | quote }}
+              port: {{ .Values.global.workerPort }}
             initialDelaySeconds: 20
             periodSeconds: 20
             timeoutSeconds: 10
@@ -119,8 +146,10 @@ metadata:
   name: {{ include "novu.fullname" . }}-worker
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  {{- with .Values.worker.service.annotations }}
   annotations:
-    {{- toYaml .Values.worker.service.annotations | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: ClusterIP
   ports:

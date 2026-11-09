@@ -1,4 +1,5 @@
 {{- if .Values.mongodb.enabled }}
+{{- $secretName := printf "%s-mongodb-secret" (include "novu.fullname" .) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,14 +20,23 @@ spec:
         - name: {{ .Chart.Name }}-mongodb
           image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
           imagePullPolicy: IfNotPresent
-          containerName: mongodb
           {{- if .Values.mongodb.resources }}
           resources:
-              {{- toYaml .Values.mongodb.resources | nindent 12 }}
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
           {{- end }}
-          envFrom:
-            - secretRef:
-                name: {{ include "novu.fullname" . }}-mongodb-secret
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: password
+            - name: MONGO_INITDB_DATABASE
+              value: {{ .Values.global.mongodb.database | default "novu" | quote }}
           ports:
             - name: mongo
               containerPort: 27017
@@ -37,9 +47,9 @@ spec:
                 - mongosh
                 - --quiet
                 - --username
-                - "{{ .Values.global.mongodb.username }}"
+                - "$(MONGO_INITDB_ROOT_USERNAME)"
                 - --password
-                - "{{ .Values.global.mongodb.password }}"
+                - "$(MONGO_INITDB_ROOT_PASSWORD)"
                 - --eval
                 - db.adminCommand('ping').ok
             initialDelaySeconds: 20
@@ -52,9 +62,9 @@ spec:
                 - mongosh
                 - --quiet
                 - --username
-                - "{{ .Values.global.mongodb.username }}"
+                - "$(MONGO_INITDB_ROOT_USERNAME)"
                 - --password
-                - "{{ .Values.global.mongodb.password }}"
+                - "$(MONGO_INITDB_ROOT_PASSWORD)"
                 - --eval
                 - db.adminCommand('ping').ok
             initialDelaySeconds: 20
@@ -65,9 +75,9 @@ spec:
             - name: mongodb-data
               mountPath: /data/db
       volumes:
-      - name: mongodb-data
-        persistentVolumeClaim:
-          claimName: {{ include "novu.fullname" . }}-mongodb-data
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: {{ include "novu.fullname" . }}-mongodb-data
 ---
 apiVersion: v1
 kind: Service

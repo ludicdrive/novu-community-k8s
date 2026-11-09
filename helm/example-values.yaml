@@ -1,58 +1,44 @@
-# Example values for Novu Helm Chart
-# Copy this file and customize for your environment
-
-# IMPORTANT: Create External Secrets First
-# ========================================
-# Before installing, create the required secrets externally (see README.md)
-# The chart will NOT overwrite existing secrets - they must be pre-created.
-# Required secrets: mongodb (username/password), application secrets (jwt-secret, store-encryption-key, novu-secret-key)
+# Example values for the Novu Helm chart.
+# Copy this file and customize it for your environment.
 
 global:
-  # MongoDB configuration (username should match pre-created secret)
+  # MongoDB username used when the chart creates the credentials secret.
   mongodb:
-    username: "novu"  # Must match the username in pre-created mongodb secret
-    password: ""      # Should be empty if using pre-created secret with password
-
-  # Redis configuration
-  redis:
-    host: "redis"
-    port: "6379"
+    username: "novu"
     password: ""
 
-  # MongoDB connection URL (configure after MongoDB is running)
-  mongoUrl: ""  # Set to: mongodb://novu:<password>@mongodb:27017/novu?authSource=admin
+  # Redis connection settings
+  redis:
+    port: "6379"
+    password: ""
+    dbIndex: "2"
 
-  # Application secrets - these should be populated from pre-created external secrets
-  jwtSecret: ""       # Required - minimum 32 characters, cryptographically secure
-  storeEncryptionKey: ""  # Required - minimum 32 characters, cryptographically secure
-  novuSecretKey: ""   # Required - minimum 32 characters, cryptographically secure
+  # Public URLs (used for links and the dashboard runtime configuration)
+  apiRootUrl: "https://novu.example.com/api"
+  frontBaseURL: "https://novu.example.com"
+  dashboardUrl: "https://novu.example.com"
 
-  # Optional - S3 configuration (leave empty for local stack)
-  s3LocalStack: "false"
-  s3BucketName: ""
-  s3Region: ""
-  awsAccessKeyId: ""
-  awsSecretAccessKey: ""
+  # Context paths must match the ingress paths
+  apiContextPath: "/api"
+  wsContextPath: "/ws"
 
-  # Optional - Monitoring & analytics
-  sentryDsn: ""
-  newRelicEnabled: "false"
-  newRelicAppName: ""
-  newRelicLicenseKey: ""
+  # Service ports
+  apiPort: "3000"
+  workerPort: "3004"
+  wsPort: "3001"
 
-# Service ports (can be customized)
-apiPort: "3000"
-workerPort: "3004"
-wsPort: "3001"
+  # Dashboard runtime configuration
+  viteApiHostname: "https://novu.example.com/api"
+  viteWebSocketHostname: "https://novu.example.com/ws"
 
-# Redis configuration
+  isSelfHosted: "true"
+
 redis:
   enabled: true
   image:
     repository: redis
     tag: alpine
 
-# MongoDB configuration
 mongodb:
   enabled: true
   image:
@@ -61,41 +47,33 @@ mongodb:
   persistence:
     size: 8Gi
 
-# API service
 api:
   enabled: true
   image:
     repository: ghcr.io/novuhq/novu/api
     tag: "3.19.0"
 
-# Worker service
 worker:
   enabled: true
   image:
     repository: ghcr.io/novuhq/novu/worker
     tag: "3.19.0"
 
-# WebSocket service
 ws:
   enabled: true
   image:
     repository: ghcr.io/novuhq/novu/ws
     tag: "3.19.0"
 
-# Dashboard service
 dashboard:
   enabled: true
   image:
     repository: ghcr.io/novuhq/novu/dashboard
     tag: "3.19.0"
 
-# Ingress configuration (Traefik)
 ingress:
   enabled: true
   host: novu.example.com
   annotations:
-    # Traefik-specific annotations for SSL redirect
-    traefik.ingress.kubernetes.io/ssl-redirect: 'true'
-    # Traefik middleware for custom headers (optional)
-    # traefik.ingress.kubernetes.io/router.middlewares: novu-stripprefix@kubernetescrd
-  tlsSecretName: novu-tls-secret
+    cert-manager.io/cluster-issuer: letsencrypt
+  tlsSecretName: novu-example-com-tls

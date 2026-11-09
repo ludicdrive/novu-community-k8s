@@ -129,9 +129,12 @@ The following tables report the common parameters used in this chart.
 | `ingress.tlsSecretName` | TLS secret name for HTTPS | `` (empty) |
 
 The Ingress routes traffic to:
-- `/` → API service (port 3000)
+- `/api` → API service (port 3000)
 - `/ws` → WebSocket service (port 3001)
-- `/dashboard` → Dashboard service (port 4000)
+- `/` → Dashboard service (port 4000)
+
+`global.apiContextPath` and `global.wsContextPath` must match these paths
+(default: `/api` and `/ws`).
 
 ## Usage
 

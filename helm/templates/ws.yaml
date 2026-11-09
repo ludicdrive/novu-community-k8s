@@ -1,4 +1,6 @@
 {{- if .Values.ws.enabled }}
+{{- $secretName := printf "%s-secrets" (include "novu.fullname" .) }}
+{{- $mongodbSecretName := printf "%s-mongodb-secret" (include "novu.fullname" .) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,60 +21,76 @@ spec:
         - name: {{ .Chart.Name }}-ws
           image: "{{ .Values.ws.image.repository }}:{{ .Values.ws.image.tag }}"
           imagePullPolicy: IfNotPresent
-          containerName: ws
-       {{- if .Values.ws.resources }}
-         resources:
+          {{- if .Values.ws.resources }}
+          resources:
             {{- toYaml .Values.ws.resources | nindent 12 }}
-      {{- end }}
+          {{- end }}
           env:
-            - name: PORT
-              value: "{{ .Values.global.wsPort }}"
             - name: NODE_ENV
               value: production
+            - name: LOG_LEVEL
+              value: {{ .Values.global.logLevel | default "info" | quote }}
+            - name: PORT
+              value: {{ .Values.global.wsPort | quote }}
+            {{- if .Values.mongodb.enabled }}
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $mongodbSecretName }}
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $mongodbSecretName }}
+                  key: password
+            {{- end }}
             - name: MONGO_URL
-              value: "{{ .Values.global.mongoUrl }}"
+              value: {{ include "novu.mongoUrl" . | quote }}
             - name: MONGO_MIN_POOL_SIZE
-              value: "{{ .Values.global.mongoMinPoolSize }}"
+              value: {{ .Values.global.mongoMinPoolSize | quote }}
             - name: MONGO_MAX_POOL_SIZE
-              value: "{{ .Values.global.mongoMaxPoolSize }}"
+              value: {{ .Values.global.mongoMaxPoolSize | quote }}
             - name: REDIS_HOST
-              value: "{{ .Values.global.redis.host }}"
+              value: {{ include "novu.redis.host" . | quote }}
             - name: REDIS_PORT
-              value: "{{ .Values.global.redis.port }}"
+              value: {{ .Values.global.redis.port | quote }}
             - name: REDIS_PASSWORD
-              value: "{{ .Values.global.redis.password }}"
+              value: {{ .Values.global.redis.password | quote }}
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: jwt-secret
+            - name: GLOBAL_CONTEXT_PATH
+              value: {{ include "novu.normalizeContextPath" .Values.global.globalContextPath | quote }}
             - name: WS_CONTEXT_PATH
-              value: "{{ .Values.global.wsContextPath }}"
+              value: {{ include "novu.normalizeContextPath" .Values.global.wsContextPath | quote }}
             - name: NEW_RELIC_ENABLED
-              value: "{{ .Values.global.newRelicEnabled }}"
+              value: {{ .Values.global.newRelicEnabled | quote }}
             - name: NEW_RELIC_APP_NAME
-              value: "{{ .Values.global.newRelicAppName }}"
+              value: {{ .Values.global.newRelicAppName | quote }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "novu.fullname" . }}-secrets
+                  name: {{ $secretName }}
                   key: newrelic-license-key
+                  optional: true
           ports:
             - name: http
               containerPort: {{ .Values.global.wsPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /v1/health-check
-              port: 3001
+              path: {{ include "novu.ws.healthPath" . | quote }}
+              port: {{ .Values.global.wsPort }}
             initialDelaySeconds: 40
             periodSeconds: 20
             timeoutSeconds: 10
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /v1/health-check
-              port: 3001
+              path: {{ include "novu.ws.healthPath" . | quote }}
+              port: {{ .Values.global.wsPort }}
             initialDelaySeconds: 40
             periodSeconds: 20
             timeoutSeconds: 10
@@ -84,8 +102,10 @@ metadata:
   name: {{ include "novu.fullname" . }}-ws
   labels:
     {{- include "novu.labels" . | nindent 4 }}
+  {{- with .Values.ws.service.annotations }}
   annotations:
-    {{- toYaml .Values.ws.service.annotations | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: ClusterIP
   ports:

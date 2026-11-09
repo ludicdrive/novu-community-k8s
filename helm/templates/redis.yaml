@@ -26,7 +26,6 @@ spec:
         - name: {{ .Chart.Name }}-redis
           image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
           imagePullPolicy: IfNotPresent
-          containerName: redis
           {{- if .Values.redis.resources }}
           resources:
               {{- toYaml .Values.redis.resources | nindent 12 }}
@@ -78,5 +77,5 @@ spec:
       protocol: TCP
       name: redis
   selector:
-    app.kubernetes.io/name: redis
+    app.kubernetes.io/name: novu-redis
 {{- end }}
