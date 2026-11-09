@@ -112,9 +112,9 @@ spec:
             - name: API_ROOT_URL
               value: {{ include "novu.apiUrl" . | quote }}
             - name: GLOBAL_CONTEXT_PATH
-              value: {{ include "novu.normalizeContextPath" .Values.global.globalContextPath | quote }}
+              value: {{ include "novu.contextPathEnv" .Values.global.globalContextPath | quote }}
             - name: API_CONTEXT_PATH
-              value: {{ include "novu.normalizeContextPath" .Values.global.apiContextPath | quote }}
+              value: {{ include "novu.contextPathEnv" .Values.global.apiContextPath | quote }}
             - name: IS_EMAIL_INLINE_CSS_DISABLED
               value: {{ .Values.global.isEmailInlineCssDisabled | quote }}
             - name: IS_USE_MERGED_DIGEST_ID_ENABLED

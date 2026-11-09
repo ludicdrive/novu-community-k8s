@@ -66,6 +66,22 @@ An empty value stays empty.
 {{- end }}
 
 {{/*
+Render a context path for a *_CONTEXT_PATH environment variable.
+
+Novu's getContextPath() appends a trailing slash to each configured path and
+builds the API route prefix as `/${CONTEXT_PATH}v1`. The API enables URI
+versioning with that prefix, which does not normalize a leading slash, so
+passing `/api` produces the broken route `//api/v1/...`. Passing `api` (no
+leading or trailing slashes) produces the expected `/api/v1/...` route.
+*/}}
+{{- define "novu.contextPathEnv" -}}
+{{- $path := . | default "" | toString -}}
+{{- $path = trimPrefix "/" $path -}}
+{{- $path = trimSuffix "/" $path -}}
+{{- $path -}}
+{{- end }}
+
+{{/*
 Hostname of the MongoDB service.
 */}}
 {{- define "novu.mongodb.host" -}}

@@ -122,9 +122,9 @@ spec:
                   key: newrelic-license-key
                   optional: true
             - name: GLOBAL_CONTEXT_PATH
-              value: {{ include "novu.normalizeContextPath" .Values.global.globalContextPath | quote }}
+              value: {{ include "novu.contextPathEnv" .Values.global.globalContextPath | quote }}
             - name: API_CONTEXT_PATH
-              value: {{ include "novu.normalizeContextPath" .Values.global.apiContextPath | quote }}
+              value: {{ include "novu.contextPathEnv" .Values.global.apiContextPath | quote }}
             - name: IS_API_IDEMPOTENCY_ENABLED
               value: {{ .Values.global.isApiIdempotencyEnabled | quote }}
             - name: IS_API_RATE_LIMITING_ENABLED

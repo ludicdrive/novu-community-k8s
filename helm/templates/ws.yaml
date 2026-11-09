@@ -62,9 +62,9 @@ spec:
                   name: {{ $secretName }}
                   key: jwt-secret
             - name: GLOBAL_CONTEXT_PATH
-              value: {{ include "novu.normalizeContextPath" .Values.global.globalContextPath | quote }}
+              value: {{ include "novu.contextPathEnv" .Values.global.globalContextPath | quote }}
             - name: WS_CONTEXT_PATH
-              value: {{ include "novu.normalizeContextPath" .Values.global.wsContextPath | quote }}
+              value: {{ include "novu.contextPathEnv" .Values.global.wsContextPath | quote }}
             - name: NEW_RELIC_ENABLED
               value: {{ .Values.global.newRelicEnabled | quote }}
             - name: NEW_RELIC_APP_NAME
